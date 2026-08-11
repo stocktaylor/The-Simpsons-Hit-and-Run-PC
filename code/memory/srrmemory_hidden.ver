@@ -1,0 +1,32 @@
+# This game overrides the global operator new/delete (see srrmemory.h/.cpp)
+# so that the very first heap allocation anywhere in the process lazily
+# bootstraps the engine's memory/threading system. On GCC/Clang the compiler
+# can't be told to hide these via __attribute__((visibility("hidden"))),
+# because <new> is always included first somewhere in the translation unit
+# and its own default-visibility declaration wins ("visibility attribute
+# ignored because it conflicts with previous declaration").
+#
+# Without this script these symbols stay in the executable's dynamic symbol
+# table with default (exported) visibility, which on ELF/glibc means every
+# other shared library loaded into the process resolves its own calls to
+# operator new/delete through ours too - not just our own code. If some
+# unrelated DSO's static initializer (e.g. Mesa's shader compiler pulled in
+# transitively through the GL/EGL driver stack) allocates memory before
+# main() runs, it triggers our lazy bootstrap
+# (Win32Platform::InitializeMemory -> radThreadInitialize -> SDL_CreateMutex)
+# while the dynamic linker is still in the middle of running the process's
+# own ELF constructors, which segfaults.
+#
+# Demoting just these four symbols to local scope at link time keeps the
+# override in effect for all of SRR2's own statically-linked code (those
+# calls resolve directly at link time, unaffected by this script) while
+# preventing independently loaded shared libraries from picking it up.
+{
+global:
+    *;
+local:
+    _Znwm;
+    _ZdlPv;
+    _Znam;
+    _ZdaPv;
+};

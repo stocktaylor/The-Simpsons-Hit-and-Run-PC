@@ -80,9 +80,7 @@ class CGuiWindow : public CGuiEntity
             GUI_SCREEN_ID_SOUND,
             GUI_SCREEN_ID_VIEW_MOVIES,
             GUI_SCREEN_ID_VIEW_CREDITS,
-#ifdef RAD_PC
             GUI_SCREEN_ID_DISPLAY,
-#endif
             GUI_SCREEN_ID_PLAY_MOVIE,
             GUI_SCREEN_ID_PLAY_MOVIE_DEMO,
             GUI_SCREEN_ID_PLAY_MOVIE_INTRO,

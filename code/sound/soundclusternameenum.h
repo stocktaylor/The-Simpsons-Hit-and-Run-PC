@@ -142,7 +142,7 @@ enum SoundClusterName
     SC_MAX_CLUSTERS
 };
 
-static_assert(SC_MAX_CLUSTERS == SC_CAR_BASE + VehicleEnum::NUM_VEHICLES,
+static_assert(SC_MAX_CLUSTERS == static_cast<int>(SC_CAR_BASE) + static_cast<int>(VehicleEnum::NUM_VEHICLES),
     "Not enough sound clusters for all vehicles");
 
 #endif // SOUNDCLUSTERNAMEENUM_H

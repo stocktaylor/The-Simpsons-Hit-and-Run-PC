@@ -48,9 +48,7 @@ class BootupContext : public Context,
         void StartLoadingSound();
         void ResetLicenseScreenDisplayTime() { m_elapsedTime = 0; }
 
-#ifdef RAD_PC
         void LoadConfig();
-#endif
 
         pddiShader* GetSharedShader( void ) { return m_pSharedShader; }
 

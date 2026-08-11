@@ -53,7 +53,7 @@ private:
     enum eMenuItem
     {
         MENU_ITEM_RESOLUTION,
-        MENU_ITEM_COLOUR_DEPTH,
+        MENU_ITEM_FRAMERATE_CAP,
         MENU_ITEM_DISPLAY_MODE,
         MENU_ITEM_GAMMA,
         MENU_ITEM_APPLY_CHANGES,

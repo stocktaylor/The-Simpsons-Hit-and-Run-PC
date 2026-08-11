@@ -503,9 +503,16 @@ void RenderManager::ContextUpdate( unsigned int iElapsedTime )
     END_PROFILE( "Swap Buffers" );
 
 #if defined( RAD_XBOX ) || defined ( RAD_GAMECUBE ) || defined( RAD_WIN32 )
+    // Always vsync during actual gameplay, to avoid uncapped/absurd frame
+    // rates on modern GPUs and high refresh-rate displays. Exempt loading,
+    // though: the async file loader (radLoadManager) runs on its own
+    // thread, but it's gated by a mutex handoff with the main loop - it
+    // only gets to run in the window the main loop yields to it via
+    // p3d::loadManager->SwitchTask() each iteration. Blocking that on
+    // vsync caps loading throughput at the display's refresh rate for no
+    // benefit (nothing about a loading screen needs frame pacing).
     LoadingManager* lm = GetLoadingManager();
-    PresentationManager* pm = GetPresentationManager();
-    p3d::display->SetForceVSync( lm && !lm->IsLoading(), !(pm && pm->GetFMVPlayer()->IsPlaying()));               
+    p3d::display->SetForceVSync( lm && !lm->IsLoading(), true );
 #endif
 
 #ifdef LOAD_SYNC

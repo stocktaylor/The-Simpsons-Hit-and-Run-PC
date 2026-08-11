@@ -34,6 +34,17 @@
 
 struct IRadNameSpace;
 
+// Declaration (not definition - that's in namespace.cpp) of the explicit
+// specialization of radLinkedClass<IRadNameSpace>'s static data members.
+// This must appear before any use below (e.g. MoveToFront()) that would
+// otherwise implicitly instantiate radLinkedClass<IRadNameSpace> first -
+// [temp.expl.spec] requires an explicit specialization to be declared
+// before the first implicit-instantiating use in every translation unit
+// that uses it. GCC has always tolerated the ordering violation this file
+// had before this declaration was added, but Clang correctly rejects it.
+template<> IRadNameSpace * radLinkedClass< IRadNameSpace >::s_pLinkedClassHead;
+template<> IRadNameSpace * radLinkedClass< IRadNameSpace >::s_pLinkedClassTail;
+
 //============================================================================
 // Factories and functions
 //============================================================================

@@ -64,10 +64,8 @@
     #include <main/gamecube_extras/gcmanager.h>
 #endif
 
-#ifdef RAD_PC
-    #include <main/win32platform.h>
-    #include <data/config/gameconfigmanager.h>
-#endif
+#include <main/win32platform.h>
+#include <data/config/gameconfigmanager.h>
 
 //******************************************************************************
 //
@@ -235,7 +233,6 @@ BootupContext::StartLoadingSound()
     GetLoadingManager()->AddCallback( this, (void*)GetSoundManager() );
 }
 
-#ifdef RAD_PC
 void BootupContext::LoadConfig()
 {
     // Load the config file for the game.
@@ -245,13 +242,10 @@ void BootupContext::LoadConfig()
     // If we couldn't load the config file, create a new one.
     if( !success )
     {
-#ifdef RAD_PC
         Win32Platform::GetInstance()->LoadDefaults();
-#endif
         gc->SaveConfigFile();
     }
 }
-#endif
 
 //******************************************************************************
 //

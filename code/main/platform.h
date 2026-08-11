@@ -71,8 +71,13 @@ class Platform : public IRadDriveErrorCallback
         virtual void OnControllerError(const char *msg) = 0;
 
         //Override this if you wanna support it.
-        virtual bool OnDriveError( radFileError error, const char* pDriveName, void* pUserData ) { return false; };  
+        virtual bool OnDriveError( radFileError error, const char* pDriveName, void* pUserData ) { return false; };
         void ClearControllerError() { OnDriveError(Success, NULL, NULL);}
+
+        // Target frames per second to pace the main loop to, or 0 for unlocked.
+        // Console platforms are already paced by their fixed-refresh display
+        // and don't need this; only overridden where it's user-configurable.
+        virtual int GetFrameRateCap() const { return 0; }
         bool PausedForErrors() const { return mPauseForError; };
         bool IsControllerError() const {  return mErrorState==CTL_ERROR; };
         IRadDrive* GetHostDrive( void ) const { return mpIRadDrive; }

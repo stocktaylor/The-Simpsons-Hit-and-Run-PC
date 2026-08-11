@@ -108,9 +108,7 @@
 #include <loading/roaddatasegmentloader.h>
 #include <atc/atcloader.h>
 #include <data/gamedatamanager.h>
-#ifdef RAD_PC
 #include <data/config/gameconfigmanager.h>
-#endif
 #include <debug/debuginfo.h>
 #include <constants/srrchunks.h>
 #include <gameflow/gameflow.h>
@@ -146,7 +144,7 @@ Win32Platform* Win32Platform::spInstance = NULL;
 // Other static members.
 SDL_Window* Win32Platform::mWnd = NULL;
 #ifdef WIN32
-#include <Windows.h>
+#include <windows.h>
 void* Win32Platform::mhMutex = NULL;
 #endif
 bool Win32Platform::mShowCursor = true;
@@ -526,13 +524,11 @@ void Win32Platform::InitializePlatform()
 {
     HeapMgr()->PushHeap (GMA_PERSISTENT);
 
-#ifdef RAD_PC
     //
     // Register with the game config manager
     //
     GetGameConfigManager()->RegisterConfig(this);
     GetGameConfigManager()->LoadConfigFile();
-#endif
 
     //
     // Rendering is good.
@@ -857,12 +853,10 @@ bool Win32Platform::OnDriveError( radFileError error, const char* pDriveName, vo
             strncpy( adjustedName, &fileName[adjustedIndex], ( strlen( fileName ) - lastIndex ) );
             adjustedName[ strlen( fileName ) - lastIndex ] = '\0';
 
-#ifdef RAD_PC
             if( strcmp( fileName, GameConfigManager::ConfigFilename ) == 0 )
             {
                 return false;
             }
-#endif
 
             char errorString[256];
             sprintf( errorString, "%s:\n%s", ERROR_STRINGS[error], adjustedName );
@@ -912,8 +906,19 @@ bool Win32Platform::OnDriveError( radFileError error, const char* pDriveName, vo
 
 bool Win32Platform::SetResolution( Resolution res, int bpp, bool fullscreen )
 {
-    // Check if resolution is supported.
-    if( !mpContext || !IsResolutionSupported( res, bpp ) )
+    if( !mpContext )
+    {
+        return false;
+    }
+
+    // IsResolutionSupported() checks the resolution against the monitor's
+    // list of native fullscreen video modes - a fullscreen-only concept.
+    // A window doesn't need the display to natively support a mode, it
+    // just needs to be resizable to that size, so only gate on this check
+    // when actually going fullscreen. Without this, picking any of the
+    // fixed resolutions in windowed mode can silently no-op on a modern
+    // display whose native/desktop resolution doesn't match any of them.
+    if( fullscreen && !IsResolutionSupported( res, bpp ) )
     {
         return false;
     }
@@ -994,7 +999,6 @@ bool Win32Platform::IsFullscreen() const
 //
 // Notes:
 //=============================================================================
-#ifdef RAD_PC
 const char* Win32Platform::GetConfigName() const
 {
     return "System";
@@ -1014,7 +1018,7 @@ const char* Win32Platform::GetConfigName() const
 
 int Win32Platform::GetNumProperties() const
 {
-    return 4;
+    return 6;
 }
 
 //=============================================================================
@@ -1042,9 +1046,11 @@ void Win32Platform::LoadDefaults()
 #else
     SetResolution( StartingResolution, StartingBPP, false );
 #endif
-    
+
 
     GetRenderFlow()->SetGamma( 1.0f );
+
+    mFrameRateCap = 60;
 }
 
 //=============================================================================
@@ -1102,6 +1108,10 @@ void Win32Platform::LoadConfig( ConfigString& config )
             {
                 mResolution = Res_1600x1200;
             }
+            else if( strcmp( value, "1280x800" ) == 0 )
+            {
+                mResolution = Res_1280x800;
+            }
         }
         else if( _stricmp( property, "bpp" ) == 0 )
         {
@@ -1125,6 +1135,10 @@ void Win32Platform::LoadConfig( ConfigString& config )
         else if (_stricmp(property, "renderer") == 0)
         {
             strncpy(mRenderer, value, ConfigString::MaxLength);
+        }
+        else if( _stricmp( property, "frameratecap" ) == 0 )
+        {
+            mFrameRateCap = atoi( value );
         }
     }
 
@@ -1181,6 +1195,11 @@ void Win32Platform::SaveConfig( ConfigString& config )
             res = "1600x1200";
             break;
         }
+        case Res_1280x800:
+        {
+            res = "1280x800";
+            break;
+        }
         default:
         {
             rAssert( false );
@@ -1196,8 +1215,11 @@ void Win32Platform::SaveConfig( ConfigString& config )
     config.WriteProperty( "gamma", gamma );
 
     config.WriteProperty("renderer", mRenderer);
+
+    char frameRateCap[20];
+    sprintf( frameRateCap, "%d", mFrameRateCap );
+    config.WriteProperty( "frameratecap", frameRateCap );
 }
-#endif
 
 //******************************************************************************
 //
@@ -1220,6 +1242,7 @@ Win32Platform::Win32Platform() :
     mpContext( NULL ),
     mResolution( StartingResolution ),
     mbpp( StartingBPP ),
+    mFrameRateCap( 60 ),
     mRenderer( "dx8" )
 {
     mFullscreen = false;
@@ -1710,6 +1733,12 @@ void Win32Platform::TranslateResolution( Resolution res, int&x, int&y )
         {
             x = 1600;
             y = 1200;
+            break;
+        }
+        case Res_1280x800:
+        {
+            x = 1280;
+            y = 800;
             break;
         }
         default:

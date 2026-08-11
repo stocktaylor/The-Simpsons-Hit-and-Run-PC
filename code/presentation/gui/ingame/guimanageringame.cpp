@@ -32,9 +32,7 @@
 #include <presentation/gui/ingame/guiscreenmissionselect.h>
 #include <presentation/gui/ingame/guiscreenhudmap.h>
 #include <presentation/gui/ingame/guiscreenpauseoptions.h>
-#ifdef RAD_PC
 #include <presentation/gui/ingame/guiscreenpausedisplay.h>
-#endif
 #include <presentation/gui/ingame/guiscreenpausecontroller.h>
 #include <presentation/gui/ingame/guiscreenpausesound.h>
 #include <presentation/gui/ingame/guiscreenpausesettings.h>
@@ -376,23 +374,19 @@ MEMTRACK_PUSH_GROUP( "CGUIManagerInGame" );
         pScreen = new CGuiScreenPauseOptions( pScroobyScreen, this );
         this->AddWindow( CGuiWindow::GUI_SCREEN_ID_OPTIONS, pScreen );
     }
-#ifdef RAD_PC
     pScroobyScreen = m_pScroobyProject->GetScreen( "PauseDisplay" );
     if( pScroobyScreen != NULL )
     {
         pScreen = new CGuiScreenPauseDisplay( pScroobyScreen, this );
         this->AddWindow( CGuiWindow::GUI_SCREEN_ID_DISPLAY, pScreen );
     }
-#endif
 
-#ifdef RAD_PC
     pScroobyScreen = m_pScroobyProject->GetScreen( "PauseController" );
     if( pScroobyScreen != NULL )
     {
         pScreen = new CGuiScreenPauseController( pScroobyScreen, this );
         this->AddWindow( CGuiWindow::GUI_SCREEN_ID_CONTROLLER, pScreen );
     }
-#endif
 
     pScroobyScreen = m_pScroobyProject->GetScreen( "PauseSound" );
     if( pScroobyScreen != NULL )

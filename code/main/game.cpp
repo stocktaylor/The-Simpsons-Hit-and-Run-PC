@@ -23,6 +23,7 @@
 #include <radfile.hpp>
 #include <radmemorymonitor.hpp>
 #include <radtime.hpp>
+#include <radthread.hpp>
 // Pure3D
 #include <p3d/loadmanager.hpp>
 #include <p3d/utility.hpp>
@@ -37,6 +38,7 @@
 #include <contexts/contextenum.h>
 #include <debug/profiler.h>
 #include <gameflow/gameflow.h>
+#include <loading/loadingmanager.h>
 #include <presentation/gui/ingame/guiscreenmissionload.h>
 #include <main/commandlineoptions.h>
 #include <main/game.h>
@@ -633,6 +635,32 @@ void Game::Run()
 
         g_AllowDebugOutput = false;
 #endif // DEMO_MODE_PROFILER
+
+        // Cap the frame rate if requested. Gameplay/physics run once per
+        // render frame using its real elapsed time as dt, so on high
+        // refresh-rate displays an unlocked frame rate feeds them a much
+        // smaller dt than the game was ever tuned/tested against.
+        //
+        // This has to happen before END_PROFILE/END_PROFILER_FRAME below,
+        // since those close out the window the debug frame time/fps
+        // counters measure - sleeping after them would pace the game
+        // correctly but leave the on-screen counters reporting only the
+        // unpaced work time per frame.
+        //
+        // Skip the cap while loading: p3d::loadManager->SwitchTask() above
+        // only gets pumped once per loop iteration, so throttling the loop
+        // here throttles loading throughput too. This mirrors the loop's
+        // existing loading exemption for forced vsync.
+        int frameRateCap = mpPlatform->GetFrameRateCap();
+        if( frameRateCap > 0 && !( GetLoadingManager() && GetLoadingManager()->IsLoading() ) )
+        {
+            unsigned targetFrameMs = 1000 / frameRateCap;
+            unsigned frameElapsed = radTimeGetMilliseconds() - newTime;
+            if( frameElapsed < targetFrameMs )
+            {
+                ::radThreadSleep( targetFrameMs - frameElapsed );
+            }
+        }
 
         END_PROFILE( "GameLoop" )
 

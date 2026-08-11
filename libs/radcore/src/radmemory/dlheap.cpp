@@ -14,6 +14,17 @@
 #include <raddebug.hpp>
 #include <radmemorymonitor.hpp>
 
+// On a real Windows target (e.g. mingw-w64), the standard library's own
+// headers require _WIN32 to still be defined when they're first included -
+// mingw's <sys/types.h>/<time.h> (both pulled in further down by the
+// Doug Lea malloc source below) hard-error without it. Undefining _WIN32
+// below is fine for Doug Lea's malloc itself (that's the whole point - see
+// the comment there), but only as long as these two have already been
+// fully processed once beforehand, since headers are otherwise a no-op on
+// repeat inclusion.
+#include <sys/types.h>
+#include <time.h>
+
 #ifdef RAD_DEBUG
 #undef DEBUG
 #define DEBUG 1

@@ -286,9 +286,7 @@ void CGuiManagerBootUp::HandleMessage
 
             m_state = GUI_FE_SHUTTING_DOWN;
 
-#ifdef RAD_PC
             GetBootupContext()->LoadConfig();
-#endif
 
             // Tell the current screen to shut down.
             //

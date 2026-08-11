@@ -60,7 +60,7 @@ unsigned int const radMovie_NoAudioTrack = 0xFFFFFFFF;
 
 #define RAD_MOVIE_PLAYER_VIDEO_LAG 10
 
-#define AV_CHK(x) if (int error = (x) < 0) { \
+#define AV_CHK(x) if (int error = (x); error < 0) { \
         char str[AV_ERROR_MAX_STRING_SIZE]; \
         av_strerror( error, str, AV_ERROR_MAX_STRING_SIZE ); \
         rDebugPrintf( "%s at %s:%d\n", str, __FILE__, __LINE__ ); \
@@ -203,6 +203,7 @@ void radMoviePlayer::Load( const char * pVideoFileName, unsigned int audioTrackI
 
     const AVCodec* pVideoCodec = NULL;
     m_VideoTrackIndex = av_find_best_stream( m_pFormatCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &pVideoCodec, 0 );
+    AV_CHK( m_VideoTrackIndex );
     AVCodecParameters* pVideoParams = m_pFormatCtx->streams[m_VideoTrackIndex]->codecpar;
     m_pVideoCtx = avcodec_alloc_context3( pVideoCodec );
     AV_CHK( avcodec_parameters_to_context( m_pVideoCtx, pVideoParams ) );
@@ -224,6 +225,7 @@ void radMoviePlayer::Load( const char * pVideoFileName, unsigned int audioTrackI
     {
         const AVCodec* pAudioCodec = NULL;
         m_AudioTrackIndex = av_find_best_stream( m_pFormatCtx, AVMEDIA_TYPE_AUDIO, audioTrackIndex + 1, -1, &pAudioCodec, 0 );
+        AV_CHK( m_AudioTrackIndex );
         AVCodecParameters* pAudioParams = m_pFormatCtx->streams[m_AudioTrackIndex]->codecpar;
         m_pAudioCtx = avcodec_alloc_context3( pAudioCodec );
         AV_CHK( avcodec_parameters_to_context( m_pAudioCtx, pAudioParams ) );
