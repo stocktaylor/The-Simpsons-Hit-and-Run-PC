@@ -1,9 +1,11 @@
-# CMake toolchain file for cross-compiling SRR2 to 64-bit Windows using
-# MinGW-w64, from a Linux host. Use with:
-#   cmake -B build-windows -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw64.cmake ...
+# CMake toolchain file for cross-compiling SRR2 to 64-bit Windows (x86_64)
+# using GCC via MinGW-w64, from a Linux host. Use with:
+#   cmake -B build-windows-x86 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw64.cmake ...
 #
-# See scripts/build-windows.sh for a full build using this file inside a
-# container with the required mingw64-* packages installed.
+# See scripts/build-windows-x86.sh --gcc for a full build using this file
+# inside a container with the required mingw64-* packages installed. The
+# default (Clang) build of that same script uses
+# cmake/toolchain-llvm-mingw.cmake instead.
 
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR x86_64)

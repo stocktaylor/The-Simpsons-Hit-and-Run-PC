@@ -836,7 +836,7 @@ void HeapManager::DestroyInstance()
             ::radMemorySetAllocatorCallback( NULL );
 
             HeapManager* hm = static_cast<HeapManager*>( p );
-            delete( GMA_PERSISTENT, hm );
+            delete hm;
 
             s_Instance->SetValue( NULL );
         }

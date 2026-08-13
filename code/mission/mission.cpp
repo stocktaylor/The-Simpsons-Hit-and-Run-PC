@@ -1973,7 +1973,7 @@ bool Mission::CanMDKCar(Vehicle* pVehicle,MissionStage* pStage)
         }
     }
 
-    for (index; index <MAX_STAGES;index++)
+    for ( ; index <MAX_STAGES;index++)
     {
         if (mMissionStages[index] != NULL )
         {

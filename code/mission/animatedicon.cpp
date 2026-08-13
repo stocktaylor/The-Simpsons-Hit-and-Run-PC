@@ -407,7 +407,7 @@ void AnimatedIcon::GetPosition( rmt::Vector& pos )
 // Return:      void
 //
 //=============================================================================
-void* AnimatedIcon::operator new( size_t size )
+void* AnimatedIcon::operator new( size_t size ) noexcept
 {
     rAssert( sAnimatedIconPool != NULL );
     rAssert( sNumAllocated < MAX_ICONS );

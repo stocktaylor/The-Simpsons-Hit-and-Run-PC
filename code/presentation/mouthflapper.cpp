@@ -362,9 +362,12 @@ void MouthFlapper::NeuSpeed()
     float defaultMinSpeed     = mSetting.GetMinSpeed();
     float defaultMaxOpen      = mSetting.GetMaxOpen();
     float defaultMinOpen      = mSetting.GetMinOpen();
-    mSpeed   = defaultMinSpeed + ( defaultMaxSpeed - defaultMinSpeed ) * rand() / RAND_MAX;
-    mMaxOpen = defaultMaxOpen - defaultMaxDeviation * rand() / RAND_MAX;
-    mMinOpen = defaultMinOpen + defaultMaxDeviation * rand() / RAND_MAX;
+    // RAND_MAX (INT_MAX) cast explicitly: it can't be represented exactly
+    // as a float (off by 1 part in ~2 billion), which is fine here but
+    // otherwise trips Clang's implicit-narrowing check.
+    mSpeed   = defaultMinSpeed + ( defaultMaxSpeed - defaultMinSpeed ) * rand() / static_cast<float>( RAND_MAX );
+    mMaxOpen = defaultMaxOpen - defaultMaxDeviation * rand() / static_cast<float>( RAND_MAX );
+    mMinOpen = defaultMinOpen + defaultMaxDeviation * rand() / static_cast<float>( RAND_MAX );
 }
 
 //=============================================================================

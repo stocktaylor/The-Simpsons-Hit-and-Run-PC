@@ -741,7 +741,7 @@ void VehicleCentral::DestroyInstance()
 {
     rAssert(spInstance);
 
-    delete(GMA_PERSISTENT, spInstance);
+    delete spInstance;
     spInstance = NULL;
 
 

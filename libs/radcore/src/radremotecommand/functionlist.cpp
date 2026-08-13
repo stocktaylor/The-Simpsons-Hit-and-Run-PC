@@ -80,7 +80,10 @@ FunctionList::~FunctionList( void )
 //------------------------------------------------------------------------------
 void FunctionList::Add( const char* functionName, RemoteFunction rfptr, void* userData )
 {
-	rAssert( (functionName != "") && (functionName[0] != '\0') );
+	// Was previously also checked via `functionName != ""`, which compares
+	// pointers rather than contents and is unspecified for two distinct
+	// literals - functionName[0] is the actual non-empty check.
+	rAssert( functionName[0] != '\0' );
 	rAssert( rfptr != NULL );
 	//
 	// Will need a new node

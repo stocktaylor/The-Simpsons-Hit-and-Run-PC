@@ -41,6 +41,11 @@ static inline GLenum PickPixelFormat(pddiPixelFormat format)
     case PDDI_PIXEL_DXT3: return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
     case PDDI_PIXEL_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 #endif
+    // Remaining pddiPixelFormat values aren't valid inputs here (e.g.
+    // PDDI_PIXEL_UNKNOWN, or formats belonging to other platforms' PDDI
+    // backends) - handled below like any other unmatched case.
+    default:
+        break;
     }
     PDDIASSERT(false);
     return GL_INVALID_ENUM;
@@ -88,6 +93,13 @@ static inline pddiPixelFormat PickPixelFormat(pddiTextureType type, int bitDepth
 
     case PDDI_TEXTYPE_YUV:
         return PDDI_PIXEL_YUV;
+
+    // Remaining pddiTextureType values (e.g. PDDI_TEXTYPE_IPU,
+    // PDDI_TEXTYPE_Z, PDDI_TEXTYPE_LINEAR) belong to other platforms' PDDI
+    // backends and aren't valid inputs here - handled below like any other
+    // unmatched case.
+    default:
+        break;
     }
     PDDIASSERT(false);
     return PDDI_PIXEL_UNKNOWN;

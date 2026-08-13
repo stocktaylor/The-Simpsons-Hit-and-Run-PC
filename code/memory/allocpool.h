@@ -78,8 +78,8 @@ AllocPool<T>::~AllocPool()
 {
     Finalize();
     
-    delete[] ( mHeap, mPool );
-    delete[] ( mHeap, mUsed );
+    delete[] mPool;
+    delete[] mUsed;
 }
 
 template <class T>
@@ -133,7 +133,7 @@ void AllocPool<T>::Finalize()
     {
         if( mPool[ i ] == NULL )
         {
-            delete( mHeap, mPool[ i ] );
+            delete mPool[ i ];
             mPool[ i ] = NULL;
         }
     }*/

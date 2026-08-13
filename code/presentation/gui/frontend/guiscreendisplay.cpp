@@ -256,6 +256,11 @@ void CGuiScreenDisplay::HandleMessage
                 }
                 break;
             }
+
+            // Remaining eGuiMessage values aren't handled by this screen -
+            // handled below like any other unmatched case.
+            default:
+                break;
         }
 
         // relay message to menu

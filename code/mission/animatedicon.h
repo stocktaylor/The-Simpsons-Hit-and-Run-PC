@@ -73,7 +73,13 @@ public:
 
     void GetPosition( rmt::Vector& pos );
 
-    static void* operator new( size_t size );
+    // noexcept: this can legitimately return null when the fixed pool
+    // (MAX_ICONS) is exhausted. Without noexcept, a throwing operator new
+    // is never allowed to return null per the standard, and callers of
+    // plain `new AnimatedIcon()` (none of which null-check) rely on the
+    // compiler skipping construction on a null return - which it's only
+    // required to do for a noexcept allocation function.
+    static void* operator new( size_t size ) noexcept;
     static void* operator new( size_t size, GameMemoryAllocator allocator );
     static void operator delete( void* mem );
     static void operator delete( void* mem, GameMemoryAllocator allocator );

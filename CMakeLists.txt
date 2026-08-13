@@ -6,9 +6,9 @@ project(SRR2)
 # syntax, C++17). Not setting this explicitly leaves the effective standard
 # up to whatever the ambient compiler defaults to, which is why this can
 # build fine on a host with a newer GCC (implicit C++17+ default) while
-# failing in an older toolchain, like the Steam Deck's Sniper SDK container,
-# whose GCC defaults to an older standard - same source, same flags
-# otherwise, different result purely from an unset standard.
+# failing in an older toolchain, like the Linux build's Sniper SDK
+# container, whose GCC defaults to an older standard - same source, same
+# flags otherwise, different result purely from an unset standard.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -70,12 +70,14 @@ find_package(OpenAL REQUIRED)
 
 # On Windows, AL/al.h and AL/alc.h declare every function __declspec(dllimport)
 # unless AL_LIBTYPE_STATIC is defined, which only matches a real DLL + import
-# library (e.g. Fedora's mingw64-openal-soft package for the x86_64 Windows
-# build). When OpenAL itself is built as a plain static archive instead (no
-# import library exists) - as scripts/build-windows-arm64.sh does, since
-# there's no prebuilt OpenAL for that target - the dllimport declarations
-# don't match the archive's plain symbols and the final link fails with
-# "cannot be used because it is not an import library". This option tells
+# library (e.g. Fedora's mingw64-openal-soft package, used by
+# scripts/build-windows-x86.sh's GCC build). When OpenAL itself is built as a
+# plain static archive instead (no import library exists) - as
+# scripts/build-windows-arm.sh always does, and scripts/build-windows-x86.sh
+# does for its default Clang build, since neither has a prebuilt OpenAL
+# available - the dllimport declarations don't match the archive's plain
+# symbols and the final link fails with "cannot be used because it is not an
+# import library". This option tells
 # SRR2's own code (not OpenAL Soft's build, which sets this independently for
 # its own sources) to use plain declarations to match.
 option(SRR2_OPENAL_STATIC "Set when linking against a static (non-DLL) OpenAL build with no import library" OFF)
@@ -85,7 +87,7 @@ endif()
 
 option(SRR2_WERROR "Treat warnings as errors in Debug builds" ON)
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
 	add_compile_options(-fvisibility=hidden)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		add_compile_options(-ggdb)

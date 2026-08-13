@@ -157,7 +157,7 @@ void SoundManager::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete( GMA_PERSISTENT, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 
@@ -2005,16 +2005,16 @@ SoundManager::~SoundManager()
         return;
     }
 
-    delete( GMA_PERSISTENT, m_soundFXPlayer);
-    delete( GMA_PERSISTENT, m_movingSoundManager);
-    delete( GMA_PERSISTENT, m_NISPlayer);
-    delete( GMA_PERSISTENT, m_dialogCoordinator);
-    delete( GMA_PERSISTENT, m_musicPlayer);
-    delete( GMA_PERSISTENT, m_soundLoader);
+    delete m_soundFXPlayer;
+    delete m_movingSoundManager;
+    delete m_NISPlayer;
+    delete m_dialogCoordinator;
+    delete m_musicPlayer;
+    delete m_soundLoader;
 
     Sound::daSoundRenderingManagerTerminate();
 
-    delete( GMA_PERSISTENT, m_debugDisplay);
+    delete m_debugDisplay;
 }
 
 //=============================================================================

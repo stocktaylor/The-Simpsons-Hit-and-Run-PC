@@ -310,7 +310,7 @@ void CStateProp::RemoveStatePropListener( CStatePropListener* statePropListener 
 	}
 
 	//copy other entries back over 
-	for ( i; i < m_NumStatePropListeners; i++ )
+	for ( ; i < m_NumStatePropListeners; i++ )
 	{
 		m_StatePropListener[i] = m_StatePropListener[i+1];
 	}

@@ -114,7 +114,10 @@ bool block_save_to_stream_synch( const block * p_m, stream_info * p_si )
 
 offset_t block_size( block * p_m )
 {
-    return p_m->reverse_endian, p_m->size / 8;
+    // p_m->reverse_endian was previously read here too via the comma
+    // operator, but its value was discarded and had no effect - size is in
+    // bits regardless of endianness.
+    return p_m->size / 8;
 }
 
 bool block_construct_from_stream_synch(
@@ -1143,7 +1146,7 @@ bool debug_printf_write( void * stream, const void *buffer, unsigned int size  )
 
     unsigned int b;
 
-    for( b = 0; b < full_block; b )
+    for( b = 0; b < full_block; b++ )
     {
         ::memcpy( buf, ((const char*) buffer) + ( b * PRINTF_BUFFER_SIZE ), PRINTF_BUFFER_SIZE );
         buf[ PRINTF_BUFFER_SIZE ] = 0;

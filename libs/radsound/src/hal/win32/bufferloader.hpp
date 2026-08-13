@@ -12,6 +12,20 @@
 #include <radsound_hal.hpp>  
 #include <radsoundobject.hpp>
 
+class radSoundBufferLoaderWin;
+
+// Declaration (not definition - that's in bufferloader.cpp) of the explicit
+// specialization of radLinkedClass<radSoundBufferLoaderWin>'s static data
+// members. Must appear before any use that would otherwise implicitly
+// instantiate radLinkedClass<radSoundBufferLoaderWin> first -
+// [temp.expl.spec] requires an explicit specialization to be declared
+// before the first implicit-instantiating use in every translation unit
+// that uses it. GCC tolerates the ordering violation this file had before
+// this declaration was added, but Clang correctly rejects it (see
+// radnamespace.hpp for the same fix applied to another radLinkedClass<T>).
+template<> radSoundBufferLoaderWin * radLinkedClass< radSoundBufferLoaderWin >::s_pLinkedClassHead;
+template<> radSoundBufferLoaderWin * radLinkedClass< radSoundBufferLoaderWin >::s_pLinkedClassTail;
+
 //=============================================================================
 // Component: radSoundBufferLoaderWin
 //=============================================================================

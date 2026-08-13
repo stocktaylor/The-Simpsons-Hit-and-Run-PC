@@ -27,6 +27,20 @@
 
 struct SimpsonsSoundPlayerCallback;
 class SimpsonsSoundPlayer;
+class SoundRenderingPlayerCallback;
+
+// Declaration (not definition - that's in soundrenderercallback.cpp) of the
+// explicit specialization of radLinkedClass<SoundRenderingPlayerCallback>'s
+// static data members. Must appear before any use that would otherwise
+// implicitly instantiate radLinkedClass<SoundRenderingPlayerCallback>
+// first - [temp.expl.spec] requires an explicit specialization to be
+// declared before the first implicit-instantiating use in every
+// translation unit that uses it. GCC tolerates the ordering violation this
+// file had before this declaration was added, but Clang correctly rejects
+// it (see radnamespace.hpp for the same fix applied to another
+// radLinkedClass<T>).
+template<> SoundRenderingPlayerCallback * radLinkedClass< SoundRenderingPlayerCallback >::s_pLinkedClassHead;
+template<> SoundRenderingPlayerCallback * radLinkedClass< SoundRenderingPlayerCallback >::s_pLinkedClassTail;
 
 //=============================================================================
 //

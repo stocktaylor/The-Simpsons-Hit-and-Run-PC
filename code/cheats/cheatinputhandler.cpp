@@ -154,7 +154,13 @@ CheatInputHandler::ResetInputSequence()
 const char*
 CheatInputHandler::GetInputName( eCheatInput cheatInput )
 {
-    rAssert( cheatInput < static_cast<int>( NUM_CHEAT_INPUT_MAPPINGS ) );
+    // Both sides cast to int: eCheatInput's declared enumerators only span
+    // -1..3, so comparing it directly against NUM_CHEAT_INPUT_MAPPINGS (9,
+    // the CHEAT_INPUT_MAPPINGS table size) is always true for any value the
+    // type can hold - Clang correctly flags that as tautological. Casting
+    // preserves the original intent (guard the array index below) without
+    // relying on the enum's restricted range.
+    rAssert( static_cast<int>( cheatInput ) < static_cast<int>( NUM_CHEAT_INPUT_MAPPINGS ) );
 
     return CHEAT_INPUT_MAPPINGS[ cheatInput ].inputName;
 }

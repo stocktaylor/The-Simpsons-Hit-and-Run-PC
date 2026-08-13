@@ -79,7 +79,7 @@ void CheatInputSystem::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete( GMA_PERSISTENT, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 
@@ -148,7 +148,7 @@ CheatInputSystem::~CheatInputSystem()
     //
     if( m_cheatsDB != NULL )
     {
-        delete( GMA_PERSISTENT, m_cheatsDB );
+        delete m_cheatsDB;
         m_cheatsDB = NULL;
     }
 

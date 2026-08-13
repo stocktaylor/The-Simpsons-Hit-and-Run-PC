@@ -21,6 +21,18 @@
 struct radSoundHalPositionalGroup;
 struct radSoundhalPositionalEntity;
 
+// Declaration (not definition - that's in positionalgroup.cpp) of the
+// explicit specialization of radLinkedClass<radSoundHalPositionalGroup>'s
+// static data members. Must appear before any use that would otherwise
+// implicitly instantiate radLinkedClass<radSoundHalPositionalGroup> first -
+// [temp.expl.spec] requires an explicit specialization to be declared
+// before the first implicit-instantiating use in every translation unit
+// that uses it. GCC tolerates the ordering violation this file had before
+// this declaration was added, but Clang correctly rejects it (see
+// radnamespace.hpp for the same fix applied to another radLinkedClass<T>).
+template<> radSoundHalPositionalGroup * radLinkedClass< radSoundHalPositionalGroup >::s_pLinkedClassHead;
+template<> radSoundHalPositionalGroup * radLinkedClass< radSoundHalPositionalGroup >::s_pLinkedClassTail;
+
 //============================================================================
 // radSoundhalPostionalEntity
 //============================================================================

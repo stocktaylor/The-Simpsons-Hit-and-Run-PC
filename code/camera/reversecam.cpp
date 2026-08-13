@@ -147,8 +147,6 @@ void ReverseCam::Update( unsigned int milliseconds )
         desiredPosition.Add( desiredTarget, targToCam );
         //Override the y height.
         desiredPosition.y = desiredTarget.y + mYHeight;
-
-        mMagnitude = mMagnitude; 
     }
     else if ( targToCam.MagnitudeSqr() < 49.0f )
     {

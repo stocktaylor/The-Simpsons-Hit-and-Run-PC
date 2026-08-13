@@ -1075,7 +1075,7 @@ void RenderManager::OnProcessRequestsComplete( void* pUserData )
                 
             }
 
-            for(i;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
+            for(;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
             {
                 i++;
                 if(i<mpZEL->GetNumLoadZones())
@@ -1356,7 +1356,14 @@ void RenderManager::ThawFromPresentation( void )
 void RenderManager::HandleEvent( EventEnum id, void* pEventData )
 {
 BEGIN_PROFILE( "RenderManager HandleEvent" );
-   switch(id)
+   // Switched as int rather than EventEnum: EVENT_LOCATOR + LocatorEvent::X
+   // below is a deliberately valid but unnamed EventEnum value (locator
+   // sub-events are reserved a range starting at EVENT_LOCATOR, see
+   // eventenum.h's EVENT_PLACEHOLDER), not a bug - but Clang's -Wswitch
+   // flags any case value that doesn't match a named enumerator of the
+   // switch's type, which a plain int switch doesn't check (same fix as
+   // the other HandleEvent overrides in this codebase).
+   switch(static_cast<int>(id))
    {
    case EVENT_MISSION_RESET:
        {
@@ -1570,7 +1577,7 @@ END_PROFILE( "Zone/Int Dump" );
             //////////////////////////////////////////////////////////////////////////
 BEGIN_PROFILE( "Find Load Zone" );
             i=-1;
-            for(i;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
+            for(;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
             {
                i++;
                if(i<mpZEL->GetNumLoadZones())

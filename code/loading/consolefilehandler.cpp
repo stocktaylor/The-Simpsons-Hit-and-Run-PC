@@ -155,7 +155,7 @@ MEMTRACK_POP_GROUP("ConsoleFileHandler");
             GetConsole()->Evaluate( mFileDataBuffer, mpConsoleFile->GetFilename() );
 
 
-            delete[]( GMA_TEMP, mFileDataBuffer );
+            delete[] mFileDataBuffer;
             mFileDataBuffer = 0;
             
             mpConsoleFile->Release();
@@ -216,7 +216,7 @@ MEMTRACK_PUSH_GROUP( "ConsoleFileHandler" );
 
     GetConsole()->Evaluate( mFileDataBuffer, filename );
 
-    delete[]( GMA_TEMP, mFileDataBuffer );
+    delete[] mFileDataBuffer;
     mFileDataBuffer = 0;
     
     mpConsoleFile->Release();

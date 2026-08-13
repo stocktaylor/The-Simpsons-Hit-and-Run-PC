@@ -83,22 +83,22 @@ FBMemoryPool Console::AliasTableEntry::sMemoryPool( sizeof(Console::AliasTableEn
 //=============================================================================
 static bool cConsoleTrue( int argc, const char** argv )
 {
-    argc;
-    argv;
+    (void)argc;
+    (void)argv;
     return( true );
 }
 
 static bool cConsoleFalse( int argc, const char** argv )
 {
-    argc;
-    argv;
+    (void)argc;
+    (void)argv;
     return( false );
 }
 
 static void cConsoleExit(int argc, const char** argv)
 {
-    argc;
-    argv;
+    (void)argc;
+    (void)argv;
     //does nothing, but the parser will terminate executing a script
 }
 
@@ -109,7 +109,7 @@ static void cConsoleExec(int argc, const char** argv)
 
 static void cConsoleSetLogMode(int argc, const char** argv)
 {
-    argc;
+    (void)argc;
     if (! smStricmp(argv[1], "on"))
         GetConsole()->SetConsoleLogMode(Console::LOGMODE_ON);
     else if (! smStricmp(argv[1], "append"))
@@ -138,20 +138,20 @@ static void cConsoleError(int argc, const char** argv)
 
 static void cConsoleListFunctions(int argc, const char** argv)
 {
-    argc;
-    argv;
+    (void)argc;
+    (void)argv;
     GetConsole()->ListConsoleFunctions();
 }
 
 static void cConsoleListenChannel(int argc, const char** argv)
 {
-    argc;
+    (void)argc;
     GetConsole()->ConsoleListenChannel(atoi(argv[1]));
 }
 
 static void cConsoleBlockChannel(int argc, const char** argv)
 {
-    argc;
+    (void)argc;
     GetConsole()->ConsoleBlockChannel(atoi(argv[1]));
 }
 

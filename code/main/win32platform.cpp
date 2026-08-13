@@ -253,7 +253,7 @@ void Win32Platform::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete( GMA_PERSISTENT, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 

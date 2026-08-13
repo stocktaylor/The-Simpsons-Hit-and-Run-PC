@@ -1857,7 +1857,13 @@ void SuperCamCentral::NoTransition()
 //=============================================================================
 void SuperCamCentral::HandleEvent( EventEnum id, void* pEventData )
 {
-    switch ( id )
+    // Switched as int rather than EventEnum: EVENT_LOCATOR + LocatorEvent::X
+    // below is a deliberately valid but unnamed EventEnum value (locator
+    // sub-events are reserved a range starting at EVENT_LOCATOR, see
+    // eventenum.h's EVENT_PLACEHOLDER), not a bug - but Clang's
+    // -Wswitch flags any case value that doesn't match a named enumerator
+    // of the switch's type, which a plain int switch doesn't check.
+    switch ( static_cast<int>( id ) )
     {
     case EVENT_ENTER_INTERIOR_END:
         {

@@ -37,6 +37,22 @@ struct IRadObjectBTree;
 // Define Owning Namespace
 //=============================================================================
 
+namespace Sound { class daSoundPlayerBase; }
+
+// Declaration (not definition - that's in dasoundplayer.cpp) of the
+// explicit specialization of radLinkedClass<Sound::daSoundPlayerBase>'s
+// static data members. Must be declared at global namespace scope (not
+// nested in namespace Sound), matching where radLinkedClass itself lives,
+// and before any use that would otherwise implicitly instantiate
+// radLinkedClass<Sound::daSoundPlayerBase> first - [temp.expl.spec]
+// requires an explicit specialization to be declared before the first
+// implicit-instantiating use in every translation unit that uses it. GCC
+// tolerates the ordering violation this file had before this declaration
+// was added, but Clang correctly rejects it (see radnamespace.hpp for the
+// same fix applied to another radLinkedClass<T>).
+template<> Sound::daSoundPlayerBase * radLinkedClass< Sound::daSoundPlayerBase >::s_pLinkedClassHead;
+template<> Sound::daSoundPlayerBase * radLinkedClass< Sound::daSoundPlayerBase >::s_pLinkedClassTail;
+
 namespace Sound {
 
 //=============================================================================

@@ -391,7 +391,7 @@ DListArray::DListArray()
 void DListArray::Clear()
 {
     int i=0;
-    for( i ; i<(MAX_ELEMS-1) ; ++i )
+    for( ; i<(MAX_ELEMS-1) ; ++i )
     {
         mElems[i].data = NULL;
         mElems[i].next = i+1;
@@ -515,7 +515,7 @@ bool DListArray::Remove( void* data )
 
     int i = 0;
     bool res = false;
-    for( i ; i<mnElems ; i++ ) 
+    for( ; i<mnElems ; i++ ) 
     {
         if( mElems[i].data == data )
         {
@@ -573,7 +573,7 @@ int DListArray::Find( void* data )
     rAssert( data != NULL );
 
     int i = 0;
-    for( i ; i<mnElems ; i++ ) 
+    for( ; i<mnElems ; i++ ) 
     {
         if( mElems[i].data == data )
         {
@@ -650,7 +650,7 @@ int IntersectLineSphere( const rmt::Vector& p1,
 
         rmt::Vector testVec;
         int i=0, j=0;
-        for( i; i<2; i++)
+        for( ; i<2; i++)
         {
             if( 0.0f <= t[i] && t[i] <= 1.0f )
             {

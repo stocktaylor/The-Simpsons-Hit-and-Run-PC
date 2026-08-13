@@ -24,83 +24,46 @@ If you'd just like to play in English and have no need for multi-language suppor
 
 # Building from source
 
-This project primarily targets the Nintendo Switch and PS Vita, but the CMake build also supports building a native desktop binary, which is useful for development and testing. This has been verified to build and link successfully on Linux.
+This project primarily targets the Nintendo Switch and PS Vita, but the CMake build also supports building a native desktop binary for Linux and Windows, which is useful for development and testing.
 
-## Linux
+## Desktop (Linux and Windows)
 
-### Dependencies
+All desktop builds are done via the scripts in `scripts/`, each building inside a pinned container (via `docker` or `podman`) rather than against whatever toolchain/library versions happen to be installed on your machine. This is deliberate: building natively against an arbitrary host toolchain adds variables that make "it doesn't build for me" hard to reproduce, and for the Linux build specifically, a host with a newer glibc than the container's baseline (e.g. current Fedora) silently produces a binary that won't run on other Linux systems (see `scripts/build-linux-x86.sh` for why). Building through these scripts keeps everyone's builds - and any bug reports about them - on the same footing.
 
-Install the following development packages. On Debian/Ubuntu:
+Install Docker or Podman first; set `CONTAINER_RUNTIME=podman` in your environment if you're using Podman instead of Docker.
 
-```
-sudo apt install build-essential cmake pkg-config libsdl2-dev libpng-dev \
-	libopenal-dev libavformat-dev libavcodec-dev libavutil-dev \
-	libswresample-dev libswscale-dev
-```
+Every script accepts:
 
-On Arch Linux:
+- `--debug` - build a Debug build instead of the default Release.
+- `--gcc` - compile with GCC instead of the default Clang. Not available on `build-windows-arm.sh`, which has no GCC-based cross compiler for that target and will error out if you pass it, rather than silently building with Clang anyway.
 
-```
-sudo pacman -S base-devel cmake pkgconf sdl2 libpng openal ffmpeg
-```
+Flags can be combined in any order, e.g. `./scripts/build-linux-x86.sh --gcc --debug`.
 
-On Fedora (or Fedora-derived distros):
-
-Fedora's official repos don't include `ffmpeg-devel` (patent restrictions). Either enable [RPM Fusion](https://rpmfusion.org/Configuration) `free` first:
+### Linux x86_64
 
 ```
-sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
-sudo dnf install gcc-c++ cmake pkgconf-pkg-config SDL2-devel libpng-devel openal-soft-devel ffmpeg-devel
+./scripts/build-linux-x86.sh
 ```
 
-or stay on official repos only by using `ffmpeg-free-devel` in place of `ffmpeg-devel`:
+Builds inside Valve's official Sniper SDK container (the same Debian 11-based baseline the Steam Runtime uses, including on the Steam Deck), statically linking FFmpeg so the result has no system FFmpeg dependency and runs on other modern x86_64 Linux systems as-is. Produces `build-linux-x86-<compiler>-<release|debug>/code/SRR2`.
+
+There's no Linux ARM build yet.
+
+### Windows x86_64
 
 ```
-sudo dnf install gcc-c++ cmake pkgconf-pkg-config SDL2-devel libpng-devel openal-soft-devel ffmpeg-free-devel
+./scripts/build-windows-x86.sh
 ```
 
-The build system will use SDL3 if it's found, otherwise it falls back to SDL2. As of this writing the SDL3 packages in most distro repos are too new for the SDL3 API calls used in this codebase (they've renamed/removed some functions this project still uses), which causes build errors. SDL2 is the safer choice for now; to force it even if SDL3 is installed, pass `-DCMAKE_DISABLE_FIND_PACKAGE_SDL3=ON` to the `cmake` configure command below.
+Cross-compiles from Linux inside a Fedora container. Produces `build-windows-x86-<compiler>-<release|debug>/code/SRR2.exe`.
 
-### Build
-
-From the repository root:
+### Windows ARM64
 
 ```
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j$(nproc)
+./scripts/build-windows-arm.sh
 ```
 
-This produces the `SRR2` executable at `build/code/SRR2`.
-
-By default this also builds a few sample programs for internal libraries (`SRR2_BUILD_TESTS=ON`). On GCC/Linux, the `simplemovie` sample currently fails to link with an `undefined reference to vtable for radWatcherEnabledProfiler` error — this is a pre-existing bug unrelated to these instructions (the class's virtual methods are defined behind a permanently-disabled `DEBUGWATCH` macro, which MSVC tolerates but GCC's ABI doesn't) and does not affect the `SRR2` target itself. If you'd like a clean build without it, pass `-DSRR2_BUILD_TESTS=OFF` to the `cmake` configure command:
-
-```
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSRR2_BUILD_TESTS=OFF
-cmake --build build -j$(nproc)
-```
-
-### Portable builds (no system FFmpeg dependency)
-
-By default the Linux build links against your distro's FFmpeg via pkg-config, which ties the resulting binary to that exact FFmpeg version. It'll run fine on the machine that built it, but copying it to another machine (e.g. a Steam Deck) can fail with a missing `libavformat.so`/`libavcodec.so`/etc. if that machine ships a different FFmpeg build - and on an immutable OS like SteamOS you can't just install a matching one.
-
-Pass `-DSRR2_FFMPEG_STATIC=ON` to build and statically link a minimal FFmpeg instead (source fetched automatically via CMake's `ExternalProject`, so an internet connection is needed the first time you configure with this option):
-
-```
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DSRR2_FFMPEG_STATIC=ON
-cmake --build build -j$(nproc)
-```
-
-This only enables the Bink demuxer/decoders the game's `.rmv` movies actually need, so it has no runtime dependency on the system FFmpeg (or anything else) at all - the resulting `SRR2` binary can be copied to another Linux machine, including the Steam Deck, and run as-is. It needs `make` and a C compiler available to build FFmpeg itself. `nasm`/`yasm` are optional (used for x86 asm optimizations); if neither is installed the build falls back automatically to a plain C build, which is fine for the small amount of decoding this needs.
-
-`SRR2_FFMPEG_STATIC` alone isn't enough to run on the Steam Deck if you're building on a distro with a newer glibc than SteamOS ships (e.g. current Fedora) - the binary will fail to load with an error like `GLIBC_2.43 not found`, since glibc only guarantees old binaries run on new systems, not the reverse. Whatever glibc happens to be on the build machine determines the symbol versions every libc/pthread call gets bound to, so this isn't specific to FFmpeg - it affects the whole binary.
-
-To avoid this, build inside Valve's official Sniper SDK container (the same Debian 11-based baseline the Steam Runtime uses), via `docker` or `podman`:
-
-```
-./scripts/build-steamdeck.sh
-```
-
-This produces `build-steamdeck/code/SRR2`, statically linked against FFmpeg and built against an old-enough glibc/libstdc++ baseline to run on the Deck. Set `CONTAINER_RUNTIME=podman` if you don't have Docker.
+Cross-compiles from Linux inside a Fedora container, using a downloaded llvm-mingw toolchain since Fedora has no GCC-based mingw cross compiler for this target. This is a first attempt at this target, so expect it to need iteration. Produces `build-windows-arm-clang-<release|debug>/code/SRR2.exe`.
 
 ### Running
 

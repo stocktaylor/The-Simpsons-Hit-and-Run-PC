@@ -25,6 +25,16 @@
 #include <sys/types.h>
 #include <time.h>
 
+// Doug Lea's malloc computes USE_LOCKS via defined() inside a macro body
+// (technically UB per the standard, though every compiler just evaluates it
+// as expected) - Clang warns on every USE_LOCKS expansion below, GCC
+// doesn't. Left as-is rather than restructured, per the "unmodified" note
+// above.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexpansion-to-defined"
+#endif
+
 #ifdef RAD_DEBUG
 #undef DEBUG
 #define DEBUG 1
@@ -6583,5 +6593,9 @@ IRadMemoryHeap * radMemoryCreateDougLeaHeap( void *pMem, unsigned int size, radM
     IRadMemoryHeap * pHeap = new ( allocator ) radMemoryDlAllocator( pMem, size, pName );
     return pHeap;
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 

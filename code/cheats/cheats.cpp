@@ -230,7 +230,11 @@ MEMTRACK_PUSH_GROUP( "CheatsDB" );
         rAssertMsg( m_cheats[ cheatIndex ] == CHEAT_ID_UNREGISTERED,
                     "WARNING: *** Duplicate cheat input sequence found! Clobbering previously registered cheat." );
 
-        rAssert( REGISTERED_CHEATS[ i ].m_cheatID < static_cast<int>( MAX_NUM_CHEATS ) );
+        // Both sides cast to int: eCheatID's declared enumerators don't
+        // span the full 0..MAX_NUM_CHEATS-1 range, so comparing it directly
+        // is always true for any value the type can hold (same issue as
+        // GetInputName's eCheatInput check in cheatinputhandler.cpp).
+        rAssert( static_cast<int>( REGISTERED_CHEATS[ i ].m_cheatID ) < static_cast<int>( MAX_NUM_CHEATS ) );
         m_cheats[ cheatIndex ] = REGISTERED_CHEATS[ i ].m_cheatID;
 
 #ifndef RAD_RELEASE

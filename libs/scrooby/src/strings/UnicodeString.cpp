@@ -729,7 +729,7 @@ void UnicodeString::Test()
     // test append
     int i = 0;
     string1.Clear();
-    for( i; i < 5; i++ )
+    for( ; i < 5; i++ )
     {
         string1.Append( static_cast<UnicodeChar>('a') );
     }

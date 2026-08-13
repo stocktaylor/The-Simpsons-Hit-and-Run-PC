@@ -312,7 +312,7 @@ MEMTRACK_POP_GROUP( "Game" );
 //==============================================================================
 void Game::DestroyInstance()
 {
-    delete( GMA_PERSISTENT, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 

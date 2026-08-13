@@ -79,7 +79,7 @@ AvatarManager* AvatarManager::GetInstance( void )
 void AvatarManager::DestroyInstance( void )
 {
 	rAssertMsg( spAvatarManager != 0, "AvatarManager has not been created.\n" );
-	delete ( GMA_PERSISTENT, spAvatarManager );
+	delete spAvatarManager;
 }
 //==============================================================================
 // AvatarManager::AvatarManager

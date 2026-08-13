@@ -192,6 +192,12 @@ bool tDXTNHandler::CheckFormat(Format format)
         case IMG_DXT4:            
         case IMG_DXT5:
             return true;
+
+        // Remaining Format values aren't DXT variants and aren't handled by
+        // this image handler - handled below like any other unmatched
+        // case.
+        default:
+            break;
     }
     return false;
 }

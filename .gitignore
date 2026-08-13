@@ -1,10 +1,9 @@
 .vs/
 out/
 build/
-build-steamdeck/
-build-windows/
-build-windows-arm64/
-build-windows-arm64-deps/
+build-linux-x86-*/
+build-windows-x86-*/
+build-windows-arm-*/
 switch/
 romfs/
 module/
