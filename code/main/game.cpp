@@ -506,8 +506,57 @@ void Game::Run()
         //
 #ifdef RAD_WIN32
         SDL_Event msg;
+#ifdef RAD_PORTMASTER
+        // PortMaster convention: holding Start+Select together quits the
+        // game, since these handhelds have no keyboard/window to close and
+        // most other PortMaster ports already support this combo - see
+        // scripts/build-portmaster.sh. Reuses the existing SDL_QUIT handling
+        // below rather than duplicating it, by turning the button-up event
+        // that completes the combo into a synthetic quit event.
+        static bool sPortMasterStartHeld = false;
+        static bool sPortMasterBackHeld = false;
+#endif
         while( SDL_PollEvent( &msg ) )
         {
+#ifdef RAD_PORTMASTER
+#if SDL_MAJOR_VERSION < 3
+            if( msg.type == SDL_CONTROLLERBUTTONDOWN || msg.type == SDL_CONTROLLERBUTTONUP )
+            {
+                bool pressed = ( msg.type == SDL_CONTROLLERBUTTONDOWN );
+                if( msg.cbutton.button == SDL_CONTROLLER_BUTTON_START )
+                {
+                    sPortMasterStartHeld = pressed;
+                }
+                else if( msg.cbutton.button == SDL_CONTROLLER_BUTTON_BACK )
+                {
+                    sPortMasterBackHeld = pressed;
+                }
+            }
+#else
+            if( msg.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN || msg.type == SDL_EVENT_GAMEPAD_BUTTON_UP )
+            {
+                bool pressed = ( msg.type == SDL_EVENT_GAMEPAD_BUTTON_DOWN );
+                if( msg.gbutton.button == SDL_GAMEPAD_BUTTON_START )
+                {
+                    sPortMasterStartHeld = pressed;
+                }
+                else if( msg.gbutton.button == SDL_GAMEPAD_BUTTON_BACK )
+                {
+                    sPortMasterBackHeld = pressed;
+                }
+            }
+#endif
+            if( sPortMasterStartHeld && sPortMasterBackHeld )
+            {
+                sPortMasterStartHeld = sPortMasterBackHeld = false;
+#if SDL_MAJOR_VERSION < 3
+                msg.type = SDL_QUIT;
+#else
+                msg.type = SDL_EVENT_QUIT;
+#endif
+            }
+#endif // RAD_PORTMASTER
+
 #if SDL_MAJOR_VERSION < 3
             if( msg.type == SDL_QUIT )
 #else

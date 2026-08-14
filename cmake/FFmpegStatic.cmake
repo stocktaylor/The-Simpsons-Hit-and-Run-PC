@@ -24,6 +24,23 @@ set(SRR2_FFMPEG_STATIC_TAG "n7.1.5" CACHE STRING "FFmpeg git tag to build for SR
 
 set(SRR2_FFMPEG_PREFIX "${CMAKE_BINARY_DIR}/ffmpeg-minimal")
 
+# configure-ffmpeg-minimal.sh's cross-compile args come from whichever
+# toolchain file set them: the mingw ones (SRR2_MINGW_*) for Windows, or
+# SRR2_LINUX_CROSS_PREFIX (cmake/toolchain-aarch64-linux.cmake) for Linux
+# aarch64. Neither being set means a native (non-cross) build, same as
+# before this branching existed.
+if(SRR2_MINGW_CROSS_PREFIX)
+	set(SRR2_FFMPEG_CROSS_PREFIX "${SRR2_MINGW_CROSS_PREFIX}")
+	set(SRR2_FFMPEG_CROSS_ARCH "${SRR2_MINGW_FFMPEG_ARCH}")
+	set(SRR2_FFMPEG_CROSS_CC "${SRR2_MINGW_FFMPEG_CC}")
+	set(SRR2_FFMPEG_CROSS_TARGET_OS "mingw32")
+elseif(SRR2_LINUX_CROSS_PREFIX)
+	set(SRR2_FFMPEG_CROSS_PREFIX "${SRR2_LINUX_CROSS_PREFIX}")
+	set(SRR2_FFMPEG_CROSS_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+	set(SRR2_FFMPEG_CROSS_CC "${SRR2_LINUX_CROSS_CC}")
+	set(SRR2_FFMPEG_CROSS_TARGET_OS "linux")
+endif()
+
 # CMake errors at generate time if an INTERFACE_INCLUDE_DIRECTORIES entry
 # doesn't exist yet, which it won't until ffmpeg_minimal has actually built.
 file(MAKE_DIRECTORY "${SRR2_FFMPEG_PREFIX}/include")
@@ -34,7 +51,7 @@ ExternalProject_Add(ffmpeg_minimal
 	GIT_SHALLOW TRUE
 	UPDATE_COMMAND ""
 	BUILD_IN_SOURCE TRUE
-	CONFIGURE_COMMAND sh "${CMAKE_SOURCE_DIR}/cmake/configure-ffmpeg-minimal.sh" <SOURCE_DIR> "${SRR2_FFMPEG_PREFIX}" "${SRR2_MINGW_CROSS_PREFIX}" "${SRR2_MINGW_FFMPEG_ARCH}" "${SRR2_MINGW_FFMPEG_CC}"
+	CONFIGURE_COMMAND sh "${CMAKE_SOURCE_DIR}/cmake/configure-ffmpeg-minimal.sh" <SOURCE_DIR> "${SRR2_FFMPEG_PREFIX}" "${SRR2_FFMPEG_CROSS_PREFIX}" "${SRR2_FFMPEG_CROSS_ARCH}" "${SRR2_FFMPEG_CROSS_CC}" "${SRR2_FFMPEG_CROSS_TARGET_OS}"
 	BUILD_COMMAND make -j${SRR2_FFMPEG_NPROC}
 	INSTALL_COMMAND make install
 	BUILD_BYPRODUCTS

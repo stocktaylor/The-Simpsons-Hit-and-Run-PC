@@ -19,24 +19,30 @@
 # through its own object code.
 #
 # Requires docker or podman on the host. Output goes to
-# build-linux-x86-<compiler>-<release|debug>/.
+# build-linux-x86-<compiler>-<release|debug>[-gles2]/.
 #
-# Usage: build-linux-x86.sh [--debug] [--gcc]
+# Usage: build-linux-x86.sh [--debug] [--gcc] [--gles2]
 #   --debug   build a Debug build instead of the default Release
 #   --gcc     compile with GCC instead of the default Clang
+#   --gles2   build the GLES2 PDDI backend instead of the default desktop
+#             OpenGL one (see libs/pure3d/pddi/gles) - useful for testing
+#             the same rendering backend build-portmaster.sh uses, without
+#             its cross-architecture container overhead
 
 set -e
 
 BUILD_TYPE=Release
 COMPILER=clang
+PDDI=OpenGL
 
 for arg in "$@"; do
 	case "$arg" in
 		--debug) BUILD_TYPE=Debug ;;
 		--gcc) COMPILER=gcc ;;
+		--gles2) PDDI=GLES2 ;;
 		*)
 			echo "error: unknown argument '$arg'" >&2
-			echo "usage: $0 [--debug] [--gcc]" >&2
+			echo "usage: $0 [--debug] [--gcc] [--gles2]" >&2
 			exit 1
 			;;
 	esac
@@ -47,6 +53,9 @@ IMAGE="registry.gitlab.steamos.cloud/steamrt/sniper/sdk"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_TYPE_LOWER=$(echo "$BUILD_TYPE" | tr '[:upper:]' '[:lower:]')
 BUILD_DIR="build-linux-x86-${COMPILER}-${BUILD_TYPE_LOWER}"
+if [ "$PDDI" = "GLES2" ]; then
+	BUILD_DIR="${BUILD_DIR}-gles2"
+fi
 
 if [ "$COMPILER" = "clang" ]; then
 	# g++ isn't invoked (CMAKE_C/CXX_COMPILER below still pin clang/clang++)
@@ -75,6 +84,7 @@ fi
 	-e CMAKE_COMPILER_ARGS="$CMAKE_COMPILER_ARGS" \
 	-e BUILD_TYPE="$BUILD_TYPE" \
 	-e BUILD_DIR="$BUILD_DIR" \
+	-e PDDI="$PDDI" \
 	"$IMAGE" \
 	sh -c '
 		set -e
@@ -91,6 +101,7 @@ fi
 		# causes build errors if SDL3 is picked up instead.
 		cmake -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
 			$CMAKE_COMPILER_ARGS \
+			-DSRR2_P3D_PDDI="$PDDI" \
 			-DSRR2_FFMPEG_STATIC=ON -DSRR2_BUILD_TESTS=OFF \
 			-DCMAKE_DISABLE_FIND_PACKAGE_SDL3=ON
 		cmake --build "$BUILD_DIR" -j"$(nproc)"

@@ -35,7 +35,7 @@ Install Docker or Podman first; set `CONTAINER_RUNTIME=podman` in your environme
 Every script accepts:
 
 - `--debug` - build a Debug build instead of the default Release.
-- `--gcc` - compile with GCC instead of the default Clang. Not available on `build-windows-arm.sh`, which has no GCC-based cross compiler for that target and will error out if you pass it, rather than silently building with Clang anyway.
+- `--gcc` - compile with GCC instead of the default Clang. Not available on `build-windows-arm.sh`, which has no GCC-based cross compiler for that target and will error out if you pass it, rather than silently building with Clang anyway. `build-linux-arm.sh` and `build-portmaster.sh` invert this: GCC is their default and `--clang` opts into Clang instead, since Clang's cross-compile toolchain detection currently doesn't work for that target (see those scripts' comments).
 
 Flags can be combined in any order, e.g. `./scripts/build-linux-x86.sh --gcc --debug`.
 
@@ -45,9 +45,25 @@ Flags can be combined in any order, e.g. `./scripts/build-linux-x86.sh --gcc --d
 ./scripts/build-linux-x86.sh
 ```
 
-Builds inside Valve's official Sniper SDK container (the same Debian 11-based baseline the Steam Runtime uses, including on the Steam Deck), statically linking FFmpeg so the result has no system FFmpeg dependency and runs on other modern x86_64 Linux systems as-is. Produces `build-linux-x86-<compiler>-<release|debug>/code/SRR2`.
+Builds inside Valve's official Sniper SDK container (the same Debian 11-based baseline the Steam Runtime uses, including on the Steam Deck), statically linking FFmpeg so the result has no system FFmpeg dependency and runs on other modern x86_64 Linux systems as-is. Produces `build-linux-x86-<compiler>-<release|debug>[-gles2]/code/SRR2`.
 
-There's no Linux ARM build yet.
+Pass `--gles2` to build the GLES2 PDDI backend (`libs/pure3d/pddi/gles`) instead of the default desktop OpenGL one - useful for testing that backend without the cross-architecture container overhead of the ARM/PortMaster builds below.
+
+### Linux ARM64
+
+```
+./scripts/build-linux-arm.sh
+```
+
+Cross-compiles for aarch64 Linux from an x86_64 host using Debian's multiarch cross toolchain (`crossbuild-essential-arm64`) inside an ordinary x86_64 Debian 11 container - there's no Valve Sniper SDK image for arm64 yet (checked directly; every published tag is amd64-only), so this uses plain Debian 11 instead, and cross-compiles rather than running a QEMU-emulated arm64 container so the build needs nothing beyond docker/podman on the host (see the script's comments for why the QEMU route was dropped). This is a first attempt at this target, so expect it to need iteration. Also accepts `--gles2`. Produces `build-linux-arm-<compiler>-<release|debug>[-gles2]/code/SRR2`.
+
+### PortMaster
+
+```
+./scripts/build-portmaster.sh
+```
+
+Builds for [PortMaster](https://portmaster.games/), the handheld-emulation-device porting platform. Same cross-compile approach as the ARM64 build above, always using the GLES2 PDDI backend, since PortMaster's target devices have no full desktop OpenGL. Produces `build-portmaster-<compiler>-<release|debug>/code/SRR2`, and stages a full PortMaster package at `build-portmaster-<compiler>-<release|debug>/package/` using the versioned `port.json`/launch script in `portmaster/` - see that directory's [README](portmaster/README.md) for what's still needed to finish and submit a port (game data, screenshot, gameinfo.xml, PR submission). This is a first attempt at this target, so expect it to need iteration. `SRR2` reads real SDL gamepad input for gameplay (confirmed via `libs/radcore/src/radcontroller/sdlcontroller.cpp`), so the launch script relies on PortMaster's `SDL_GAMECONTROLLERCONFIG` rather than `gptokeyb`.
 
 ### Windows x86_64
 

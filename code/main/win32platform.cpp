@@ -15,6 +15,7 @@
 //========================================
 #include <SDL.h>
 // Standard Lib
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 // Pure 3D
@@ -186,6 +187,91 @@ void LoadMemP3DFile( unsigned char* buffer, unsigned int size, tEntityStore* sto
     file->Release();
 }
 
+//==============================================================================
+// ReadStartupResolution
+//==============================================================================
+// Description: Peeks at simpsons.ini's saved resolution before the window
+//              is created, so the window opens at the right size from the
+//              start rather than being created at StartingResolution and
+//              only corrected once the config loads later (BootupContext::
+//              LoadConfig, which runs well after this). That later load
+//              goes through GameConfigManager/radFile, which isn't
+//              available yet this early - InitializeWindow() intentionally
+//              runs before InitializeFoundation() sets up FTech/radFile
+//              (see InitializeWindow's own comment) - so this reads the
+//              file directly with plain stdio instead, understanding just
+//              enough of ConfigString's "#Section"/"key=value" format to
+//              pull out the one property it needs. Skipping this step (no
+//              simpsons.ini yet, or no recognized resolution in it) just
+//              means the window opens at StartingResolution as before,
+//              same as any other first run.
+//
+// Parameters:  w, h - filled in with the saved resolution's dimensions
+//
+// Returns:     true if simpsons.ini exists and has a recognized resolution
+//              value, false otherwise.
+//==============================================================================
+static bool ReadStartupResolution( int& w, int& h )
+{
+    FILE* file = fopen( GameConfigManager::ConfigFilename, "r" );
+    if( file == NULL )
+    {
+        return false;
+    }
+
+    bool found = false;
+    bool inSystemSection = false;
+    char line[ 128 ];
+
+    while( fgets( line, sizeof( line ), file ) != NULL )
+    {
+        size_t len = strlen( line );
+        while( len > 0 && ( line[ len - 1 ] == '\n' || line[ len - 1 ] == '\r' ) )
+        {
+            line[ --len ] = '\0';
+        }
+
+        if( line[ 0 ] == '#' )
+        {
+            inSystemSection = ( _stricmp( line + 1, "System" ) == 0 );
+            continue;
+        }
+
+        if( !inSystemSection )
+        {
+            continue;
+        }
+
+        char* eq = strchr( line, '=' );
+        if( eq == NULL )
+        {
+            continue;
+        }
+        *eq = '\0';
+        const char* property = line;
+        const char* value = eq + 1;
+
+        if( _stricmp( property, "resolution" ) != 0 )
+        {
+            continue;
+        }
+
+        // Same set of values Win32Platform::LoadConfig/SaveConfig use.
+        if( strcmp( value, "640x480" ) == 0 )        { w = 640;  h = 480;  found = true; }
+        else if( strcmp( value, "800x600" ) == 0 )   { w = 800;  h = 600;  found = true; }
+        else if( strcmp( value, "1024x768" ) == 0 )  { w = 1024; h = 768;  found = true; }
+        else if( strcmp( value, "1152x864" ) == 0 )  { w = 1152; h = 864;  found = true; }
+        else if( strcmp( value, "1280x1024" ) == 0 ) { w = 1280; h = 1024; found = true; }
+        else if( strcmp( value, "1600x1200" ) == 0 ) { w = 1600; h = 1200; found = true; }
+        else if( strcmp( value, "1280x800" ) == 0 )  { w = 1280; h = 800;  found = true; }
+
+        break;
+    }
+
+    fclose( file );
+    return found;
+}
+
 //******************************************************************************
 //
 // Public Member Functions
@@ -335,7 +421,10 @@ bool Win32Platform::InitializeWindow()
     flags |= SDL_WINDOW_RESIZABLE;
 #endif
     int w, h;
-    TranslateResolution( StartingResolution, w, h );
+    if( !ReadStartupResolution( w, h ) )
+    {
+        TranslateResolution( StartingResolution, w, h );
+    }
 #if SDL_MAJOR_VERSION < 3
     mWnd = SDL_CreateWindow( ApplicationName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags );
 #else

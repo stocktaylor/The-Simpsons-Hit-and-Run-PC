@@ -18,6 +18,7 @@ set(SRR2_FILENAME "Simpsons")
 set(SRR2_REGION "NTSC" CACHE STRING "Select PAL for the EFIGS multi-language version")
 set_property(CACHE SRR2_REGION PROPERTY STRINGS "NTSC" "PAL")
 
+option(SRR2_PORTMASTER "Enable PortMaster-specific behavior (holding Start+Select together quits the game, matching the convention most other PortMaster ports follow)" OFF)
 option(SRR2_USE_DLMALLOC "Use Doug Lea's memory allocator for fixed-size heaps" OFF)
 option(SRR2_REROUTE_ALL_HEAP_ALLOCATIONS "Reroute all memory allocations by new operator to internal heaps" OFF)
 option(SRR2_USE_BINK "Use RAD Game Tools Bink SDK instead of FFmpeg" OFF)
@@ -117,6 +118,9 @@ add_definitions(
 
 if(SRR2_REGION STREQUAL "PAL")
 	add_definitions(-DPAL)
+endif()
+if(SRR2_PORTMASTER)
+	add_definitions(-DRAD_PORTMASTER)
 endif()
 if(SRR2_USE_DLMALLOC)
 	add_definitions(-DUSE_DOUG_LEA_HEAP)
