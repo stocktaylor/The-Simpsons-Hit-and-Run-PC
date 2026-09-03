@@ -59,8 +59,8 @@
 #include <memory/propstats.h>
 #include <simcommon/simenvironment.hpp>
 
-#ifdef RAD_PC
 #include <data/config/gameconfigmanager.h>
+#ifdef RAD_PC
 #include <input/MouseCursor.h>
 #endif
 
@@ -104,10 +104,8 @@ void CreateSingletons()
     GameDataManager* pGameDataManager = GameDataManager::CreateInstance();
     rAssert( pGameDataManager != NULL );
 
-#ifdef RAD_PC
     GameConfigManager* pGameConfigManager = GameConfigManager::CreateInstance();
     rAssert( pGameConfigManager != NULL );
-#endif
 
     EventManager* pEventManager = EventManager::CreateInstance();
     rAssert( pEventManager != NULL );
@@ -321,9 +319,7 @@ void DestroySingletons()
 
     EventManager::DestroyInstance();
 
-#ifdef RAD_PC
     GameConfigManager::DestroyInstance();
-#endif
 
     DESTROY_PROFILER();
 

@@ -27,7 +27,7 @@ CStatePropData::~CStatePropData()
     }
 
     unsigned int i = 0;
-    for( i; i < m_NumStates; i++ )
+    for( ; i < m_NumStates; i++ )
     {
         delete m_StateData[i];
     }

@@ -1120,7 +1120,7 @@ void WorldPhysicsManager::DestroyInstance()
     
     // TODO - Release() collision manager
 
-    delete(GMA_PERSISTENT, spInstance);
+    delete spInstance;
     spInstance = NULL;
 
 

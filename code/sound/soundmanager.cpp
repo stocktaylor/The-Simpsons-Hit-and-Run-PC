@@ -157,7 +157,7 @@ void SoundManager::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete( GMA_PERSISTENT, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 
@@ -1755,7 +1755,6 @@ void SoundManager::ResetData()
 #endif
 }
 
-#ifdef RAD_PC
 //=============================================================================
 // SoundManager::GetConfigName
 //=============================================================================
@@ -1906,7 +1905,6 @@ void SoundManager::SaveConfig( ConfigString& config )
     sprintf( value, "%f", GetCarVolume() );
     config.WriteProperty( "car", value );
 }
-#endif // RAD_WIN32
 
 void SoundManager::SetSoundMode( SoundMode mode )
 {
@@ -2007,16 +2005,16 @@ SoundManager::~SoundManager()
         return;
     }
 
-    delete( GMA_PERSISTENT, m_soundFXPlayer);
-    delete( GMA_PERSISTENT, m_movingSoundManager);
-    delete( GMA_PERSISTENT, m_NISPlayer);
-    delete( GMA_PERSISTENT, m_dialogCoordinator);
-    delete( GMA_PERSISTENT, m_musicPlayer);
-    delete( GMA_PERSISTENT, m_soundLoader);
+    delete m_soundFXPlayer;
+    delete m_movingSoundManager;
+    delete m_NISPlayer;
+    delete m_dialogCoordinator;
+    delete m_musicPlayer;
+    delete m_soundLoader;
 
     Sound::daSoundRenderingManagerTerminate();
 
-    delete( GMA_PERSISTENT, m_debugDisplay);
+    delete m_debugDisplay;
 }
 
 //=============================================================================
@@ -2092,12 +2090,10 @@ void SoundManager::Initialize()
     ::radFactoryRegister( "reverbSettings", (radFactoryProc*) reverbSettings::ObjCreate );
     ::radFactoryRegister( "positionalSoundSettings", (radFactoryProc*) positionalSoundSettings::ObjCreate );
 
-#ifdef RAD_PC
     //
     // Register with the game config manager
     //
     GetGameConfigManager()->RegisterConfig( this );
-#endif
 }
 
 //******************************************************************************

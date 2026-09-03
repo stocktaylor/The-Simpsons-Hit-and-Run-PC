@@ -40,18 +40,24 @@
 // Global Data, Local Data, Local Classes
 //===========================================================================
 
+// This screen is always built against genuine PC release assets (see
+// README), which have no "Vibration"/"InvertCamControl" groups in the
+// "PauseSettings" page - those settings don't exist on PC. The upstream
+// #ifndef RAD_PC / #ifdef RAD_PC split throughout this file assumes RAD_PC
+// is defined for a PC build, but this port doesn't define it (RAD_PC also
+// switches the whole input subsystem to a Windows-only DirectInput backend
+// that isn't portable here - see CMakeLists.txt). So these two settings,
+// and the PC-specific camera list below, are handled unconditionally in
+// this file only, rather than via RAD_PC, to keep the menu's enum/array
+// consistent with what CGuiScreenPauseSettings::CGuiScreenPauseSettings
+// actually finds in the assets (it skips groups that don't exist - see the
+// comment there) without touching the RAD_PC macro itself.
 enum ePauseSettingsMenuItem
 {
     MENU_ITEM_CAMERA,
     MENU_ITEM_JUMP_CAMERAS,
-#ifndef RAD_PC
-    MENU_ITEM_INVERT_CAM_CONTROL,
-#endif
     MENU_ITEM_INTERSECT_NAV_SYSTEM,
     MENU_ITEM_RADAR,
-#ifndef RAD_PC
-    MENU_ITEM_VIBRATION,
-#endif
     MENU_ITEM_TUTORIAL,
 
     NUM_PAUSE_SETTINGS_MENU_ITEMS
@@ -62,20 +68,13 @@ const char* PAUSE_SETTINGS_MENU_ITEMS[] =
 {
     "Camera",
     "JumpCamera",
-#ifndef RAD_PC
-    "InvertCamControl",
-#endif
     "IntersectNavSystem",
     "Radar",
-#ifndef RAD_PC
-    "Vibration",
-#endif
     "Tutorial",
 
     ""
 };
 
-#ifdef RAD_PC
 SuperCam::Type PC_CAMERAS_FOR_WALKING[] =
 {
     SuperCam::WALKER_CAM,
@@ -85,7 +84,6 @@ SuperCam::Type PC_CAMERAS_FOR_WALKING[] =
 
 const int NUM_PC_CAMERAS_FOR_WALKING = sizeof(PC_CAMERAS_FOR_WALKING)/sizeof(SuperCam::Type);
 const int NUM_PC_CAMERAS_FOR_WALKING_WITHOUT_CHEAT = 1;
-#endif
 
 //===========================================================================
 // Public Member Functions
@@ -131,6 +129,15 @@ MEMTRACK_PUSH_GROUP( "CGuiScreenPauseSettings" );
     {
         Scrooby::Group* group = pPage->GetGroup( PAUSE_SETTINGS_MENU_ITEMS[ i ] );
         rAssert( group != NULL );
+        if( group == NULL )
+        {
+            // Not every menu item in PAUSE_SETTINGS_MENU_ITEMS exists in
+            // every asset set this screen might be built against (e.g. the
+            // PC release's "PauseSettings" page has no "Vibration" or
+            // "InvertCamControl" groups, since those aren't PC settings).
+            // Skip items that aren't present rather than crash on them.
+            continue;
+        }
 
         Scrooby::Text* pText = group->GetText( PAUSE_SETTINGS_MENU_ITEMS[ i ] );
         rAssert( pText != NULL );
@@ -171,30 +178,17 @@ MEMTRACK_PUSH_GROUP( "CGuiScreenPauseSettings" );
     }
 
     m_cameraSelections[ CAMERA_SELECTION_FOR_DRIVING ] = CAMERAS_FOR_DRIVING;
-#ifdef RAD_PC
     m_cameraSelections[ CAMERA_SELECTION_FOR_WALKING ] = PC_CAMERAS_FOR_WALKING;
-#else
-    m_cameraSelections[ CAMERA_SELECTION_FOR_WALKING ] = CAMERAS_FOR_WALKING;
-#endif
 
     if( GetCheatInputSystem()->IsCheatEnabled( CHEAT_ID_UNLOCK_CAMERAS ) )
     {
         m_numCameraSelections[ CAMERA_SELECTION_FOR_DRIVING ] = NUM_CAMERAS_FOR_DRIVING;
-
-#ifdef RAD_PC
         m_numCameraSelections[ CAMERA_SELECTION_FOR_WALKING ] = NUM_PC_CAMERAS_FOR_WALKING;
-#else
-        m_numCameraSelections[ CAMERA_SELECTION_FOR_WALKING ] = NUM_CAMERAS_FOR_WALKING;
-#endif
     }
     else
     {
         m_numCameraSelections[ CAMERA_SELECTION_FOR_DRIVING ] = NUM_CAMERAS_FOR_DRIVING_WITHOUT_CHEAT;
-#ifdef RAD_PC
         m_numCameraSelections[ CAMERA_SELECTION_FOR_WALKING ] = NUM_PC_CAMERAS_FOR_WALKING_WITHOUT_CHEAT;
-#else
-        m_numCameraSelections[ CAMERA_SELECTION_FOR_WALKING ] = NUM_CAMERAS_FOR_WALKING_WITHOUT_CHEAT;
-#endif
     }
 
     GetCheatInputSystem()->RegisterCallback( this );
@@ -271,32 +265,6 @@ void CGuiScreenPauseSettings::HandleMessage
                     //
                     GetSuperCamManager()->GetSCC( 0 )->Update( 0 );
                 }
-#ifndef RAD_PC
-                else if( param1 == MENU_ITEM_VIBRATION )
-                {
-                    if( param2 == 1 ) // vibration turned ON
-                    {
-                        // send vibration pulse to controller
-                        //
-                        int controllerID = GetInputManager()->GetControllerIDforPlayer( 0 );
-#ifdef RAD_PS2
-                        if ( GetInputManager()->IsControllerInPort( Input::USB0 ) )
-                        {
-                            GetInputManager()->TriggerRumblePulse( Input::USB0 );
-                        }
-                        else if ( GetInputManager()->IsControllerInPort( Input::USB1 ) )
-                        {
-                            GetInputManager()->TriggerRumblePulse( Input::USB1 );
-                        }
-                        else
-#endif
-                        {
-                            GetInputManager()->TriggerRumblePulse( controllerID );
-                        }
-
-                    }
-                }
-#endif
 
                 break;
             }
@@ -365,12 +333,6 @@ void CGuiScreenPauseSettings::InitIntro()
     //
     bool isSettingOn = false;
 
-#ifndef RAD_PC
-    isSettingOn = GetSuperCamManager()->GetSCC( 0 )->IsInvertedCameraEnabled();
-    m_pMenu->SetSelectionValue( MENU_ITEM_INVERT_CAM_CONTROL,
-                                isSettingOn ? 1 : 0 );
-#endif
-
     isSettingOn = GetSuperCamManager()->GetSCC( 0 )->JumpCamsEnabled();
     m_pMenu->SetSelectionValue( MENU_ITEM_JUMP_CAMERAS,
                                 isSettingOn ? 1: 0 );
@@ -382,11 +344,6 @@ void CGuiScreenPauseSettings::InitIntro()
     isSettingOn = GetGuiSystem()->IsRadarEnabled();
     m_pMenu->SetSelectionValue( MENU_ITEM_RADAR,
                                 isSettingOn ? 1 : 0 );
-#ifndef RAD_PC
-    isSettingOn = GetInputManager()->IsRumbleEnabled();
-    m_pMenu->SetSelectionValue( MENU_ITEM_VIBRATION,
-                                isSettingOn ? 1 : 0 );
-#endif
 
     isSettingOn = GetTutorialManager()->IsTutorialEventsEnabled();
     m_pMenu->SetSelectionValue( MENU_ITEM_TUTORIAL,
@@ -445,11 +402,6 @@ void CGuiScreenPauseSettings::InitOutro()
     rAssert( m_pMenu != NULL );
     bool isSettingOn = false;
 
-#ifndef RAD_PC
-    isSettingOn = (m_pMenu->GetSelectionValue( MENU_ITEM_INVERT_CAM_CONTROL ) == 1);
-    GetSuperCamManager()->GetSCC( 0 )->EnableInvertedCamera( isSettingOn );
-#endif
-
     isSettingOn = (m_pMenu->GetSelectionValue( MENU_ITEM_JUMP_CAMERAS ) == 1);
     GetSuperCamManager()->GetSCC( 0 )->EnableJumpCams( isSettingOn );
 
@@ -459,12 +411,7 @@ void CGuiScreenPauseSettings::InitOutro()
     isSettingOn = (m_pMenu->GetSelectionValue( MENU_ITEM_RADAR ) == 1);
     GetGuiSystem()->SetRadarEnabled( isSettingOn );
 
-#ifndef RAD_PC
-    isSettingOn = (m_pMenu->GetSelectionValue( MENU_ITEM_VIBRATION ) == 1);
-    GetInputManager()->SetRumbleEnabled( isSettingOn );
-#endif
-
-    isSettingOn = (m_pMenu->GetSelectionValue( MENU_ITEM_TUTORIAL ) == 1) 
+    isSettingOn = (m_pMenu->GetSelectionValue( MENU_ITEM_TUTORIAL ) == 1)
 #ifdef RAD_PC
                   && !(GetInputManager()->GetController(0)->IsTutorialDisabled())
 #endif                  

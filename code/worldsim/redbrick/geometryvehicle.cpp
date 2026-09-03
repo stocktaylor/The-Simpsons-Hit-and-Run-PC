@@ -2167,7 +2167,7 @@ bool GeometryVehicle::GetArt( const char* name)
         tPose* p3dPose = mCompositeDrawable->GetPose();
 
         char buffy[128];
-        sprintf(buffy, "frinkArcGroup", i);
+        sprintf(buffy, "frinkArcGroup%d", i);
         int jointIndex = p3dPose->FindJointIndex(buffy);
 
         for(int j = 0; j < mCompositeDrawable->GetNumDrawableElement(); j++)

@@ -1080,7 +1080,6 @@ MEMTRACK_PUSH_GROUP( "Mission" );
         spInstance->mpStage = NULL;
 
         //Add the SD part of the mission...
-        index;
         GetGameplayManager()->SetNumMissions( index + 1 );
         GetGameplayManager()->SetMission( index, sdPart );
         sdPart->SetSundayDrive();

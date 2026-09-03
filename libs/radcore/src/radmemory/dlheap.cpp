@@ -14,6 +14,27 @@
 #include <raddebug.hpp>
 #include <radmemorymonitor.hpp>
 
+// On a real Windows target (e.g. mingw-w64), the standard library's own
+// headers require _WIN32 to still be defined when they're first included -
+// mingw's <sys/types.h>/<time.h> (both pulled in further down by the
+// Doug Lea malloc source below) hard-error without it. Undefining _WIN32
+// below is fine for Doug Lea's malloc itself (that's the whole point - see
+// the comment there), but only as long as these two have already been
+// fully processed once beforehand, since headers are otherwise a no-op on
+// repeat inclusion.
+#include <sys/types.h>
+#include <time.h>
+
+// Doug Lea's malloc computes USE_LOCKS via defined() inside a macro body
+// (technically UB per the standard, though every compiler just evaluates it
+// as expected) - Clang warns on every USE_LOCKS expansion below, GCC
+// doesn't. Left as-is rather than restructured, per the "unmodified" note
+// above.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexpansion-to-defined"
+#endif
+
 #ifdef RAD_DEBUG
 #undef DEBUG
 #define DEBUG 1
@@ -6572,5 +6593,9 @@ IRadMemoryHeap * radMemoryCreateDougLeaHeap( void *pMem, unsigned int size, radM
     IRadMemoryHeap * pHeap = new ( allocator ) radMemoryDlAllocator( pMem, size, pName );
     return pHeap;
 }
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 

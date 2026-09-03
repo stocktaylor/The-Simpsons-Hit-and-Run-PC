@@ -215,6 +215,14 @@ bool rDebugAssertFail_Implementation
         }
         return( false );
     }
+#elif !defined(RAD_VITA) && !defined(__SWITCH__)
+    //
+    // Desktop/SDL builds have no interactive message box to choose
+    // Abort/Retry/Ignore from, so there's no way to opt into rReleaseBreak()'s
+    // unrecoverable trap here (unlike WIN32's IDRETRY path above). Log and
+    // continue, same as this assert would silently do in a Release build.
+    //
+    return false;
 #else
 	return true;
 #endif // WIN32

@@ -129,43 +129,59 @@ CGuiScreenController::CGuiScreenController
     // get the PC Controller page
     //
     pPage = m_pScroobyScreen->GetPage( "ControllerPC" );
-    rAssert( pPage );
-
-    // and make it invisible
-    //
-    pPage->GetLayerByIndex( 0 )->SetVisible( false );
+    if( pPage != NULL && pPage->GetLayerByIndex( 0 ) != NULL )
+    {
+        // and make it invisible
+        //
+        pPage->GetLayerByIndex( 0 )->SetVisible( false );
+    }
 
     // get the Controller image
     //
     pPage = m_pScroobyScreen->GetPage( "ControllerImage" );
-    rAssert( pPage );
-
-    // and make it visible
-    //
-    pPage->GetLayerByIndex( 0 )->SetVisible( true );
+    if( pPage != NULL && pPage->GetLayerByIndex( 0 ) != NULL )
+    {
+        // and make it visible
+        //
+        pPage->GetLayerByIndex( 0 )->SetVisible( true );
+    }
 
     // get the platform-specific Controller page
     //
 #if defined( RAD_GAMECUBE )
     pPage = m_pScroobyScreen->GetPage( "ControllerGC" );
-    rAssert( pPage );
 #elif defined( RAD_PS2 )
     pPage = m_pScroobyScreen->GetPage( "ControllerPS2" );
-    rAssert( pPage );
 #else
     pPage = m_pScroobyScreen->GetPage( "ControllerXBOX" );
 #endif
-    rAssert( pPage );
-#endif
+#endif // RAD_CONSOLE
+
+    // The pages above aren't guaranteed to exist on every asset set (e.g.
+    // this PC build is missing "ControllerImage"), so bail out of the
+    // diagram/label setup gracefully rather than crash - the rest of the
+    // screen (Configuration/Display/Vibration menu) still works without it.
+    if( pPage == NULL )
+    {
+        return;
+    }
 
     // and make it visible
     //
-    pPage->GetLayerByIndex( 0 )->SetVisible( true );
+    Scrooby::Layer* pPageLayer = pPage->GetLayerByIndex( 0 );
+    if( pPageLayer != NULL )
+    {
+        pPageLayer->SetVisible( true );
+    }
 
     // get text labels
     //
     Scrooby::Group* textLabels = pPage->GetGroup( "TextLabels" );
-    rAssert( textLabels != NULL );
+    if( textLabels == NULL )
+    {
+        return;
+    }
+
     for( int i = 0; i < MAX_NUM_LABELS; i++ )
     {
         char objectName[ 32 ];

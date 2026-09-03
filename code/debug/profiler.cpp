@@ -121,7 +121,7 @@ void Profiler::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete( GMA_DEBUG, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 

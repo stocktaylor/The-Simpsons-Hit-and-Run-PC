@@ -305,9 +305,9 @@ void ActionButtonManager::DestroyInstance( void )
     rAssert( spActionButtonManager != NULL );
 
     #ifdef RAD_GAMECUBE
-        delete( GMA_GC_VMM, spActionButtonManager );
+        delete spActionButtonManager;
     #else
-        delete( GMA_PERSISTENT, spActionButtonManager );
+        delete spActionButtonManager;
     #endif
 
     spActionButtonManager = NULL;

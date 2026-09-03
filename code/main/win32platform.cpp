@@ -15,6 +15,7 @@
 //========================================
 #include <SDL.h>
 // Standard Lib
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 // Pure 3D
@@ -108,9 +109,7 @@
 #include <loading/roaddatasegmentloader.h>
 #include <atc/atcloader.h>
 #include <data/gamedatamanager.h>
-#ifdef RAD_PC
 #include <data/config/gameconfigmanager.h>
-#endif
 #include <debug/debuginfo.h>
 #include <constants/srrchunks.h>
 #include <gameflow/gameflow.h>
@@ -146,7 +145,7 @@ Win32Platform* Win32Platform::spInstance = NULL;
 // Other static members.
 SDL_Window* Win32Platform::mWnd = NULL;
 #ifdef WIN32
-#include <Windows.h>
+#include <windows.h>
 void* Win32Platform::mhMutex = NULL;
 #endif
 bool Win32Platform::mShowCursor = true;
@@ -186,6 +185,91 @@ void LoadMemP3DFile( unsigned char* buffer, unsigned int size, tEntityStore* sto
     file->SetFilename("memfile.p3d");
     p3d::loadManager->GetP3DHandler()->Load( file, p3d::inventory );
     file->Release();
+}
+
+//==============================================================================
+// ReadStartupResolution
+//==============================================================================
+// Description: Peeks at simpsons.ini's saved resolution before the window
+//              is created, so the window opens at the right size from the
+//              start rather than being created at StartingResolution and
+//              only corrected once the config loads later (BootupContext::
+//              LoadConfig, which runs well after this). That later load
+//              goes through GameConfigManager/radFile, which isn't
+//              available yet this early - InitializeWindow() intentionally
+//              runs before InitializeFoundation() sets up FTech/radFile
+//              (see InitializeWindow's own comment) - so this reads the
+//              file directly with plain stdio instead, understanding just
+//              enough of ConfigString's "#Section"/"key=value" format to
+//              pull out the one property it needs. Skipping this step (no
+//              simpsons.ini yet, or no recognized resolution in it) just
+//              means the window opens at StartingResolution as before,
+//              same as any other first run.
+//
+// Parameters:  w, h - filled in with the saved resolution's dimensions
+//
+// Returns:     true if simpsons.ini exists and has a recognized resolution
+//              value, false otherwise.
+//==============================================================================
+static bool ReadStartupResolution( int& w, int& h )
+{
+    FILE* file = fopen( GameConfigManager::ConfigFilename, "r" );
+    if( file == NULL )
+    {
+        return false;
+    }
+
+    bool found = false;
+    bool inSystemSection = false;
+    char line[ 128 ];
+
+    while( fgets( line, sizeof( line ), file ) != NULL )
+    {
+        size_t len = strlen( line );
+        while( len > 0 && ( line[ len - 1 ] == '\n' || line[ len - 1 ] == '\r' ) )
+        {
+            line[ --len ] = '\0';
+        }
+
+        if( line[ 0 ] == '#' )
+        {
+            inSystemSection = ( _stricmp( line + 1, "System" ) == 0 );
+            continue;
+        }
+
+        if( !inSystemSection )
+        {
+            continue;
+        }
+
+        char* eq = strchr( line, '=' );
+        if( eq == NULL )
+        {
+            continue;
+        }
+        *eq = '\0';
+        const char* property = line;
+        const char* value = eq + 1;
+
+        if( _stricmp( property, "resolution" ) != 0 )
+        {
+            continue;
+        }
+
+        // Same set of values Win32Platform::LoadConfig/SaveConfig use.
+        if( strcmp( value, "640x480" ) == 0 )        { w = 640;  h = 480;  found = true; }
+        else if( strcmp( value, "800x600" ) == 0 )   { w = 800;  h = 600;  found = true; }
+        else if( strcmp( value, "1024x768" ) == 0 )  { w = 1024; h = 768;  found = true; }
+        else if( strcmp( value, "1152x864" ) == 0 )  { w = 1152; h = 864;  found = true; }
+        else if( strcmp( value, "1280x1024" ) == 0 ) { w = 1280; h = 1024; found = true; }
+        else if( strcmp( value, "1600x1200" ) == 0 ) { w = 1600; h = 1200; found = true; }
+        else if( strcmp( value, "1280x800" ) == 0 )  { w = 1280; h = 800;  found = true; }
+
+        break;
+    }
+
+    fclose( file );
+    return found;
 }
 
 //******************************************************************************
@@ -255,7 +339,7 @@ void Win32Platform::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete( GMA_PERSISTENT, spInstance );
+    delete spInstance;
     spInstance = NULL;
 }
 
@@ -337,7 +421,10 @@ bool Win32Platform::InitializeWindow()
     flags |= SDL_WINDOW_RESIZABLE;
 #endif
     int w, h;
-    TranslateResolution( StartingResolution, w, h );
+    if( !ReadStartupResolution( w, h ) )
+    {
+        TranslateResolution( StartingResolution, w, h );
+    }
 #if SDL_MAJOR_VERSION < 3
     mWnd = SDL_CreateWindow( ApplicationName, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags );
 #else
@@ -526,13 +613,11 @@ void Win32Platform::InitializePlatform()
 {
     HeapMgr()->PushHeap (GMA_PERSISTENT);
 
-#ifdef RAD_PC
     //
     // Register with the game config manager
     //
     GetGameConfigManager()->RegisterConfig(this);
     GetGameConfigManager()->LoadConfigFile();
-#endif
 
     //
     // Rendering is good.
@@ -857,12 +942,10 @@ bool Win32Platform::OnDriveError( radFileError error, const char* pDriveName, vo
             strncpy( adjustedName, &fileName[adjustedIndex], ( strlen( fileName ) - lastIndex ) );
             adjustedName[ strlen( fileName ) - lastIndex ] = '\0';
 
-#ifdef RAD_PC
             if( strcmp( fileName, GameConfigManager::ConfigFilename ) == 0 )
             {
                 return false;
             }
-#endif
 
             char errorString[256];
             sprintf( errorString, "%s:\n%s", ERROR_STRINGS[error], adjustedName );
@@ -912,8 +995,19 @@ bool Win32Platform::OnDriveError( radFileError error, const char* pDriveName, vo
 
 bool Win32Platform::SetResolution( Resolution res, int bpp, bool fullscreen )
 {
-    // Check if resolution is supported.
-    if( !mpContext || !IsResolutionSupported( res, bpp ) )
+    if( !mpContext )
+    {
+        return false;
+    }
+
+    // IsResolutionSupported() checks the resolution against the monitor's
+    // list of native fullscreen video modes - a fullscreen-only concept.
+    // A window doesn't need the display to natively support a mode, it
+    // just needs to be resizable to that size, so only gate on this check
+    // when actually going fullscreen. Without this, picking any of the
+    // fixed resolutions in windowed mode can silently no-op on a modern
+    // display whose native/desktop resolution doesn't match any of them.
+    if( fullscreen && !IsResolutionSupported( res, bpp ) )
     {
         return false;
     }
@@ -994,7 +1088,6 @@ bool Win32Platform::IsFullscreen() const
 //
 // Notes:
 //=============================================================================
-#ifdef RAD_PC
 const char* Win32Platform::GetConfigName() const
 {
     return "System";
@@ -1014,7 +1107,7 @@ const char* Win32Platform::GetConfigName() const
 
 int Win32Platform::GetNumProperties() const
 {
-    return 4;
+    return 6;
 }
 
 //=============================================================================
@@ -1042,9 +1135,11 @@ void Win32Platform::LoadDefaults()
 #else
     SetResolution( StartingResolution, StartingBPP, false );
 #endif
-    
+
 
     GetRenderFlow()->SetGamma( 1.0f );
+
+    mFrameRateCap = 60;
 }
 
 //=============================================================================
@@ -1102,6 +1197,10 @@ void Win32Platform::LoadConfig( ConfigString& config )
             {
                 mResolution = Res_1600x1200;
             }
+            else if( strcmp( value, "1280x800" ) == 0 )
+            {
+                mResolution = Res_1280x800;
+            }
         }
         else if( _stricmp( property, "bpp" ) == 0 )
         {
@@ -1125,6 +1224,10 @@ void Win32Platform::LoadConfig( ConfigString& config )
         else if (_stricmp(property, "renderer") == 0)
         {
             strncpy(mRenderer, value, ConfigString::MaxLength);
+        }
+        else if( _stricmp( property, "frameratecap" ) == 0 )
+        {
+            mFrameRateCap = atoi( value );
         }
     }
 
@@ -1181,6 +1284,11 @@ void Win32Platform::SaveConfig( ConfigString& config )
             res = "1600x1200";
             break;
         }
+        case Res_1280x800:
+        {
+            res = "1280x800";
+            break;
+        }
         default:
         {
             rAssert( false );
@@ -1196,8 +1304,11 @@ void Win32Platform::SaveConfig( ConfigString& config )
     config.WriteProperty( "gamma", gamma );
 
     config.WriteProperty("renderer", mRenderer);
+
+    char frameRateCap[20];
+    sprintf( frameRateCap, "%d", mFrameRateCap );
+    config.WriteProperty( "frameratecap", frameRateCap );
 }
-#endif
 
 //******************************************************************************
 //
@@ -1220,6 +1331,7 @@ Win32Platform::Win32Platform() :
     mpContext( NULL ),
     mResolution( StartingResolution ),
     mbpp( StartingBPP ),
+    mFrameRateCap( 60 ),
     mRenderer( "dx8" )
 {
     mFullscreen = false;
@@ -1710,6 +1822,12 @@ void Win32Platform::TranslateResolution( Resolution res, int&x, int&y )
         {
             x = 1600;
             y = 1200;
+            break;
+        }
+        case Res_1280x800:
+        {
+            x = 1280;
+            y = 800;
             break;
         }
         default:

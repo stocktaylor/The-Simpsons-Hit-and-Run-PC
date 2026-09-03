@@ -318,7 +318,7 @@ void RoadManager::InitializeRoadSegmentMemory( unsigned int numRoadSegments )
     mRoadSegments = new RoadSegment*[numRoadSegments];
 
     unsigned int i = 0;
-    for( i ; i < numRoadSegments ; i++ )
+    for( ; i < numRoadSegments ; i++ )
     {
         mRoadSegments[i] = new RoadSegment;
         mRoadSegments[i]->AddRef();

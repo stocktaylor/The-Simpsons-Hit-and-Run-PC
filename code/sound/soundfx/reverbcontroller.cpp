@@ -141,7 +141,14 @@ void ReverbController::HandleEvent( EventEnum id, void* pEventData )
     reverbSettings* settingsObj = NULL;
     reverbSettings* oldSettings = m_lastReverb;
 
-    switch( id )
+    // Switched as int rather than EventEnum: EVENT_LOCATOR + LocatorEvent::X
+    // below is a deliberately valid but unnamed EventEnum value (locator
+    // sub-events are reserved a range starting at EVENT_LOCATOR, see
+    // eventenum.h's EVENT_PLACEHOLDER), not a bug - but Clang's -Wswitch
+    // flags any case value that doesn't match a named enumerator of the
+    // switch's type, which a plain int switch doesn't check (same fix as
+    // the other HandleEvent overrides in this codebase).
+    switch( static_cast<int>( id ) )
     {
         case EVENT_LOCATOR + LocatorEvent::AMBIENT_SOUND_PP_ROOM_1:
             settingsObj = getReverbSettings( "pproom1" );

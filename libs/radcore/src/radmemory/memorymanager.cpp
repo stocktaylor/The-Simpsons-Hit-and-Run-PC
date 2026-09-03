@@ -403,20 +403,16 @@ inline void CheckForOutOfMemory
         ::radMemoryMonitorSuspend();
 
         IRadMemoryAllocator* pIRadMemoryAllocator = NULL;
-        if( g_AllocatorTreeNodes != NULL )
-        {
-            pIRadMemoryAllocator = g_AllocatorTreeNodes[ allocator ].m_pIRadMemoryAllocator;
-            unsigned int totalFree, largestBlock, numberOfObjects, highWaterMark;
-            pIRadMemoryAllocator->GetStatus( &totalFree, &largestBlock, &numberOfObjects, &highWaterMark );
+        // g_AllocatorTreeNodes is a fixed-size static array (never null), so
+        // this always ran; the array is what's checked, not any individual
+        // slot's allocator.
+        pIRadMemoryAllocator = g_AllocatorTreeNodes[ allocator ].m_pIRadMemoryAllocator;
+        unsigned int totalFree, largestBlock, numberOfObjects, highWaterMark;
+        pIRadMemoryAllocator->GetStatus( &totalFree, &largestBlock, &numberOfObjects, &highWaterMark );
 
-            rReleasePrintf( "requested:%d\n", numberOfBytes );
-            rReleasePrintf( "totalFree:%d\n", totalFree );
-            rReleasePrintf( "largestBlock:%d\n", largestBlock );
-        }
-        else
-        {
-            rReleasePrintf( "No Usable Allocators\n" );
-        }
+        rReleasePrintf( "requested:%d\n", numberOfBytes );
+        rReleasePrintf( "totalFree:%d\n", totalFree );
+        rReleasePrintf( "largestBlock:%d\n", largestBlock );
 
         if ( g_pRadMemoryOutOfMemoryCallback != NULL )
 		{

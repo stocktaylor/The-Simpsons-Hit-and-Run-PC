@@ -89,6 +89,8 @@ set(SRR2_SOURCES
 	"contexts/supersprint/loadingsupersprintcontext.cpp"
 	"contexts/supersprint/supersprintcontext.cpp"
 	"contexts/supersprint/supersprintfecontext.cpp"
+	"data/config/configstring.cpp"
+	"data/config/gameconfigmanager.cpp"
 	"data/gamedatamanager.cpp"
 	"data/memcard/memorycardmanager.cpp"
 	"data/PersistentWorldManager.cpp"
@@ -244,7 +246,7 @@ set(SRR2_SOURCES
 	"presentation/gui/frontend/guiscreencardgallery.cpp"
 	"presentation/gui/frontend/guiscreencontroller.cpp"
 	#"presentation/gui/frontend/guiscreencontrollerWin32.cpp"
-	#"presentation/gui/frontend/guiscreendisplay.cpp"
+	"presentation/gui/frontend/guiscreendisplay.cpp"
 	"presentation/gui/frontend/guiscreenloadgame.cpp"
 	"presentation/gui/frontend/guiscreenmainmenu.cpp"
 	"presentation/gui/frontend/guiscreenmissiongallery.cpp"
@@ -291,7 +293,7 @@ set(SRR2_SOURCES
 	"presentation/gui/ingame/guiscreenmultihud.cpp"
 	"presentation/gui/ingame/guiscreenpausecontroller.cpp"
 	"presentation/gui/ingame/guiscreenpause.cpp"
-	#"presentation/gui/ingame/guiscreenpausedisplay.cpp"
+	"presentation/gui/ingame/guiscreenpausedisplay.cpp"
 	"presentation/gui/ingame/guiscreenpausemission.cpp"
 	"presentation/gui/ingame/guiscreenpauseoptions.cpp"
 	"presentation/gui/ingame/guiscreenpausesettings.cpp"
@@ -556,6 +558,13 @@ target_link_libraries(${PROJECT_NAME}
 	sim
 	Threads::Threads
 )
+if(UNIX AND NOT VITA)
+	# See srrmemory_hidden.ver: keeps our operator new/delete override from
+	# being picked up by unrelated shared libraries loaded into the process.
+	set(SRR2_HIDDEN_NEW_DELETE_VERSION_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/memory/srrmemory_hidden.ver")
+	target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--version-script=${SRR2_HIDDEN_NEW_DELETE_VERSION_SCRIPT}")
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_DEPENDS "${SRR2_HIDDEN_NEW_DELETE_VERSION_SCRIPT}")
+endif()
 if(SRR2_MICROPROFILE AND WIN32)
 	# needed for microprofile
 	target_link_libraries(${PROJECT_NAME} wsock32)
@@ -586,7 +595,7 @@ endif()
 if(SRR2_USE_BINK)
 	target_link_libraries(${PROJECT_NAME} bink)
 else()
-	target_link_libraries(${PROJECT_NAME} PkgConfig::FFmpeg)
+	target_link_libraries(${PROJECT_NAME} SRR2::FFmpeg)
 endif()
 
 option(SRR2_USE_PCH ON)

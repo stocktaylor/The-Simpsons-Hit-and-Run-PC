@@ -101,7 +101,7 @@ target_link_libraries(radmovie
 if(SRR2_USE_BINK)
 	target_link_libraries(radmovie bink)
 else()
-	target_link_libraries(radmovie PkgConfig::FFmpeg)
+	target_link_libraries(radmovie SRR2::FFmpeg)
 endif()
 if(SRR2_BUILD_TESTS)
 	add_executable(simplemovie "sample/src/main.cpp" "sample/src/util.cpp"
@@ -114,7 +114,7 @@ if(SRR2_BUILD_TESTS)
 		pddi
 		radcore
 		radsound
-		PkgConfig::FFmpeg
+		SRR2::FFmpeg
 	)
 	if(VITA)
 		if(SRR2_USE_VITAGL)

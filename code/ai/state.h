@@ -199,7 +199,11 @@ private:
 
     bool mObstructed : 1;
     bool mFirst      : 1;
-    int  mCollisionFailure : 3;
+    // unsigned, not int: this is a countdown (see state.cpp), never
+    // negative, and a signed 3-bit field can't hold its initializer of 4
+    // (range is -4..3) - it was silently wrapping to -4, so the countdown
+    // never reached exactly 0 again after the first collision.
+    unsigned int mCollisionFailure : 3;
 };
 
 class GetOut : public State, public EventListener

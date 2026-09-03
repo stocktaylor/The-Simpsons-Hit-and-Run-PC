@@ -100,24 +100,24 @@ globalSettings::~globalSettings()
 {
     if( m_roadSkidClip != NULL )
     {
-        delete( GMA_AUDIO_PERSISTENT, m_roadSkidClip );
+        delete m_roadSkidClip;
     }
     if( m_dirtSkidClip != NULL )
     {
-        delete( GMA_AUDIO_PERSISTENT, m_dirtSkidClip );
+        delete m_dirtSkidClip;
     }
 
     if( m_roadFootstepClip != NULL )
     {
-        delete( GMA_AUDIO_PERSISTENT, m_roadFootstepClip );
+        delete m_roadFootstepClip;
     }
     if( m_metalFootstepClip != NULL )
     {
-        delete( GMA_AUDIO_PERSISTENT, m_metalFootstepClip );
+        delete m_metalFootstepClip;
     }
     if( m_woodFootstepClip != NULL )
     {
-        delete( GMA_AUDIO_PERSISTENT, m_woodFootstepClip );
+        delete m_woodFootstepClip;
     }
 }
 

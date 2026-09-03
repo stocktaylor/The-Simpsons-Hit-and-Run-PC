@@ -1021,7 +1021,7 @@ void Intersection::GetLeftTurnForTraffic( const Road& inRoad,
         outLaneIndex = 0;
 
         unsigned int i = 0;
-        for( i ; i<mnRoadsOut ; ++i )
+        for( ; i<mnRoadsOut ; ++i )
         {
             // Grab normal of leading edge of the first segment of OUT road
             segment = mRoadListOut[i]->GetRoadSegment(0);
@@ -1145,7 +1145,7 @@ void Intersection::GetStraightForTraffic( const Road& inRoad,
         bool stillLookingForFirstRoad = true;
 
         unsigned int i = 0;
-        for( i ; i<mnRoadsOut ; ++i )
+        for( ; i<mnRoadsOut ; ++i )
         {
             // Grab normal of leading edge of the first segment of OUT road
             segment = mRoadListOut[i]->GetRoadSegment(0);
@@ -1275,7 +1275,7 @@ void Intersection::GetRightTurnForTraffic( const Road& inRoad,
         bool stillLookingForFirstRoad = true;
 
         unsigned int i = 0;
-        for( i ; i<mnRoadsOut ; ++i )
+        for( ; i<mnRoadsOut ; ++i )
         {
             // Grab normal of leading edge of the first segment of OUT road
             segment = mRoadListOut[i]->GetRoadSegment(0);

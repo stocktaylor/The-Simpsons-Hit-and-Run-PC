@@ -229,6 +229,8 @@ void operator delete(void* pMemory)
 #ifndef RAD_MW
 throw()
 #endif
+#else
+noexcept
 #endif
 {
     radMemoryFree( pMemory );
@@ -296,6 +298,8 @@ void operator delete[]( void* pMemory )
 #ifndef RAD_MW
 throw()
 #endif
+#else
+noexcept
 #endif
 {
     radMemoryFree( pMemory );
@@ -832,7 +836,7 @@ void HeapManager::DestroyInstance()
             ::radMemorySetAllocatorCallback( NULL );
 
             HeapManager* hm = static_cast<HeapManager*>( p );
-            delete( GMA_PERSISTENT, hm );
+            delete hm;
 
             s_Instance->SetValue( NULL );
         }

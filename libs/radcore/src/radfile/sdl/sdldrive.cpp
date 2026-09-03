@@ -31,6 +31,7 @@
 #if SDL_MAJOR_VERSION < 3
 #ifdef WIN32
 #include <direct.h>
+#include <cstdio>
 #else
 #include <unistd.h>
 #endif
@@ -96,6 +97,7 @@ radSdlDrive::radSdlDrive( const char* pdrivespec, radMemoryAllocator alloc )
     //
     // Copy the drivename
     //
+    m_DrivePath[0] = '\0';
     radGetDefaultDrive( m_DriveName );
     if ( strcmp(m_DriveName, pdrivespec ) != 0 )
     {
@@ -244,7 +246,21 @@ radDrive::CompletionStatus radSdlDrive::OpenFile
         return Error;
     }
 
-#if SDL_MAJOR_VERSION < 3
+#ifdef WIN32
+    //
+    // SDL's Windows RWops backend goes straight to raw CreateFile/ReadFile/
+    // SetFilePointerEx with only a small internal read-ahead buffer, unlike
+    // its stdio-based backend used on every other platform (fopen/fread,
+    // which get libc-level buffering). Since nothing in this engine's asset
+    // loading path (cement libraries, configs, etc) ever opts into the
+    // higher-level FileCache (see filecache.cpp - every caller passes
+    // cacheSize 0), every logical read below is otherwise an uncached,
+    // unbuffered Win32 API round-trip - fine on Linux/consoles via libc
+    // buffering, but drastically slower on Windows. Using plain buffered
+    // stdio here instead gives Windows the same libc buffering every other
+    // platform already gets for free through SDL.
+    *pHandle = fopen( fullName, createFlags );
+#elif SDL_MAJOR_VERSION < 3
     *pHandle = SDL_RWFromFile(fullName, createFlags);
 #else
     *pHandle = SDL_IOFromFile( fullName, createFlags );
@@ -253,7 +269,12 @@ radDrive::CompletionStatus radSdlDrive::OpenFile
     if ( *pHandle )
     {
         m_OpenFiles++;
-#if SDL_MAJOR_VERSION < 3
+#ifdef WIN32
+        FILE* fp = (FILE*)*pHandle;
+        fseek( fp, 0, SEEK_END );
+        *pSize = (unsigned int)ftell( fp );
+        fseek( fp, 0, SEEK_SET );
+#elif SDL_MAJOR_VERSION < 3
         *pSize = SDL_RWsize( (SDL_RWops*)*pHandle );
 #else
         *pSize = SDL_GetIOSize( (SDL_IOStream*)*pHandle );
@@ -274,7 +295,9 @@ radDrive::CompletionStatus radSdlDrive::OpenFile
 
 radDrive::CompletionStatus radSdlDrive::CloseFile( radFileHandle handle, const char* fileName )
 {
-#if SDL_MAJOR_VERSION < 3
+#ifdef WIN32
+    fclose( (FILE*)handle );
+#elif SDL_MAJOR_VERSION < 3
     SDL_RWclose( (SDL_RWops*)handle );
 #else
     SDL_CloseIO( (SDL_IOStream*)handle );
@@ -305,7 +328,12 @@ radDrive::CompletionStatus radSdlDrive::ReadFile
     //
     // set file pointer
     //
-#if SDL_MAJOR_VERSION < 3
+#ifdef WIN32
+    if ( fseek( (FILE*)handle, (long)position, SEEK_SET ) == 0 )
+    {
+        if ( bytesToRead == 0 || fread( pData, 1, bytesToRead, (FILE*)handle ) > 0 )
+        {
+#elif SDL_MAJOR_VERSION < 3
     if ( SDL_RWseek( (SDL_RWops*)handle, position, RW_SEEK_SET ) >= 0 )
     {
         if (SDL_RWread( (SDL_RWops*)handle, pData, 1, bytesToRead ) > 0 )
@@ -365,7 +393,11 @@ radDrive::CompletionStatus radSdlDrive::WriteFile
     //
     // do the write
     //
-#if SDL_MAJOR_VERSION < 3
+#ifdef WIN32
+    if ( fseek( (FILE*)handle, (long)position, SEEK_SET ) == 0 )
+    {
+        *bytesWritten = (unsigned int)fwrite( pData, 1, bytesToWrite, (FILE*)handle );
+#elif SDL_MAJOR_VERSION < 3
     if ( SDL_RWseek( (SDL_RWops*)handle, position, RW_SEEK_SET ) >= 0 )
     {
         *bytesWritten = SDL_RWwrite( (SDL_RWops*)handle, pData, 1, bytesToWrite );
@@ -379,7 +411,13 @@ radDrive::CompletionStatus radSdlDrive::WriteFile
             //
             // Sucessful write
             //
-#if SDL_MAJOR_VERSION < 3
+#ifdef WIN32
+            fflush( (FILE*)handle );
+            long curPos = ftell( (FILE*)handle );
+            fseek( (FILE*)handle, 0, SEEK_END );
+            *pSize = (unsigned int)ftell( (FILE*)handle );
+            fseek( (FILE*)handle, curPos, SEEK_SET );
+#elif SDL_MAJOR_VERSION < 3
             *pSize = SDL_RWsize( (SDL_RWops*)handle );
 #else
             *pSize = SDL_GetIOSize( (SDL_IOStream*)handle );

@@ -122,7 +122,7 @@ DebugInfo::~DebugInfo()
     for(i=0; i<MaxSections; i++)
     {
     	if(_ppSections[i])
-    		delete (GMA_DEBUG, _ppSections[i]);
+    		delete _ppSections[i];
     }
 }
 
@@ -210,7 +210,7 @@ void DebugInfo::CreateNewSection( const char* section )
 //==============================================================================
 void DebugInfo::DestroyInstance()
 {
-    delete(GMA_DEBUG, _Instance);
+    delete _Instance;
 }
 
 

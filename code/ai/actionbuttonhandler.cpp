@@ -4912,7 +4912,7 @@ void PurchaseSkin::OnUpdate( float timeins )
 /*
     Merchandise* m = rm->FindFirstMerchandise( currLev, Merchandise::SELLER_INTERIOR );
 
-/*    mAllPurchased = true;
+    mAllPurchased = true;
 
     while ( m != NULL )
     {

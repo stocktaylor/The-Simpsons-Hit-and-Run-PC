@@ -503,9 +503,16 @@ void RenderManager::ContextUpdate( unsigned int iElapsedTime )
     END_PROFILE( "Swap Buffers" );
 
 #if defined( RAD_XBOX ) || defined ( RAD_GAMECUBE ) || defined( RAD_WIN32 )
+    // Always vsync during actual gameplay, to avoid uncapped/absurd frame
+    // rates on modern GPUs and high refresh-rate displays. Exempt loading,
+    // though: the async file loader (radLoadManager) runs on its own
+    // thread, but it's gated by a mutex handoff with the main loop - it
+    // only gets to run in the window the main loop yields to it via
+    // p3d::loadManager->SwitchTask() each iteration. Blocking that on
+    // vsync caps loading throughput at the display's refresh rate for no
+    // benefit (nothing about a loading screen needs frame pacing).
     LoadingManager* lm = GetLoadingManager();
-    PresentationManager* pm = GetPresentationManager();
-    p3d::display->SetForceVSync( lm && !lm->IsLoading(), !(pm && pm->GetFMVPlayer()->IsPlaying()));               
+    p3d::display->SetForceVSync( lm && !lm->IsLoading(), true );
 #endif
 
 #ifdef LOAD_SYNC
@@ -1068,7 +1075,7 @@ void RenderManager::OnProcessRequestsComplete( void* pUserData )
                 
             }
 
-            for(i;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
+            for(;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
             {
                 i++;
                 if(i<mpZEL->GetNumLoadZones())
@@ -1349,7 +1356,14 @@ void RenderManager::ThawFromPresentation( void )
 void RenderManager::HandleEvent( EventEnum id, void* pEventData )
 {
 BEGIN_PROFILE( "RenderManager HandleEvent" );
-   switch(id)
+   // Switched as int rather than EventEnum: EVENT_LOCATOR + LocatorEvent::X
+   // below is a deliberately valid but unnamed EventEnum value (locator
+   // sub-events are reserved a range starting at EVENT_LOCATOR, see
+   // eventenum.h's EVENT_PLACEHOLDER), not a bug - but Clang's -Wswitch
+   // flags any case value that doesn't match a named enumerator of the
+   // switch's type, which a plain int switch doesn't check (same fix as
+   // the other HandleEvent overrides in this codebase).
+   switch(static_cast<int>(id))
    {
    case EVENT_MISSION_RESET:
        {
@@ -1563,7 +1577,7 @@ END_PROFILE( "Zone/Int Dump" );
             //////////////////////////////////////////////////////////////////////////
 BEGIN_PROFILE( "Find Load Zone" );
             i=-1;
-            for(i;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
+            for(;i<mpZEL->GetNumLoadZones()&&alreadyLoaded; )
             {
                i++;
                if(i<mpZEL->GetNumLoadZones())

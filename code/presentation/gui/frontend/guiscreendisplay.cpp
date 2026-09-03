@@ -28,12 +28,16 @@
 #include <Page.h>
 #include <Group.h>
 #include <Text.h>
+#include <FeText.h>
 
 //===========================================================================
 // Global Data, Local Data, Local Classes
 //===========================================================================
 
 
+// "ColourDepth" is the name of the underlying Scrooby asset group; it's kept
+// as-is here since we can't rename binary assets, but the control it wires up
+// is repurposed in code as the frame rate cap selector (see MENU_ITEM_FRAMERATE_CAP).
 const char* DISPLAY_MENU_ITEMS[] =
 {
     "Resolution",
@@ -92,6 +96,8 @@ MEMTRACK_PUSH_GROUP( "CGuiScreenDisplay" );
         Scrooby::Group* group = pPage->GetGroup( DISPLAY_MENU_ITEMS[ i ] );
         rAssert( group != NULL );
 
+        Scrooby::Text* pLabelText = group->GetText( DISPLAY_MENU_ITEMS[ i ] );
+
         sprintf( itemName, "%s_Value", DISPLAY_MENU_ITEMS[ i ] );
         Scrooby::Text* pTextValue = group->GetText( itemName );
 
@@ -101,7 +107,36 @@ MEMTRACK_PUSH_GROUP( "CGuiScreenDisplay" );
         sprintf( itemName, "%s_ArrowR", DISPLAY_MENU_ITEMS[ i ] );
         Scrooby::Sprite* pRArrow = group->GetSprite( itemName );
 
-        m_pMenu->AddMenuItem( group->GetText( DISPLAY_MENU_ITEMS[ i ] ),
+        if( i == MENU_ITEM_RESOLUTION )
+        {
+            // Append the Steam Deck's native resolution as an extra value
+            // beyond the 6 pre-authored in the asset. TODO: replace this
+            // fixed list entirely with one built from the actual supported
+            // display modes.
+            FeText* pFeTextValue = dynamic_cast< FeText* >( pTextValue );
+            rAssert( pFeTextValue != NULL );
+            pFeTextValue->AddHardCodedString( "1280x800" );
+        }
+
+        if( i == MENU_ITEM_FRAMERATE_CAP )
+        {
+            // The colour depth control is obsolete (the renderer no longer
+            // offers a 16-bit path) but it's the only other pre-built
+            // value-cycling control the Display screen assets provide, so
+            // relabel it (and its two existing string values, plus a third
+            // added for) the frame rate cap options: "30 FPS" / "60 FPS" /
+            // "Unlocked".
+            pLabelText->SetString( 0, "Frame Rate Cap" );
+
+            pTextValue->SetString( 0, "30 FPS" );
+            pTextValue->SetString( 1, "60 FPS" );
+
+            FeText* pFeTextValue = dynamic_cast< FeText* >( pTextValue );
+            rAssert( pFeTextValue != NULL );
+            pFeTextValue->AddHardCodedString( "Unlocked" );
+        }
+
+        m_pMenu->AddMenuItem( pLabelText,
                               pTextValue,
                               NULL,
                               NULL,
@@ -221,6 +256,11 @@ void CGuiScreenDisplay::HandleMessage
                 }
                 break;
             }
+
+            // Remaining eGuiMessage values aren't handled by this screen -
+            // handled below like any other unmatched case.
+            default:
+                break;
         }
 
         // relay message to menu
@@ -257,9 +297,18 @@ void CGuiScreenDisplay::InitIntro()
     m_pMenu->SetSelectionValue( MENU_ITEM_RESOLUTION,
                                 res );
 
-    int bpp = plat->GetBPP();
-    m_pMenu->SetSelectionValue( MENU_ITEM_COLOUR_DEPTH,
-                                bpp == 16 ? 0: 1 );
+    int frameRateCap = plat->GetFrameRateCap();
+    int frameRateCapIndex = 2; // Unlocked
+    if( frameRateCap == 30 )
+    {
+        frameRateCapIndex = 0;
+    }
+    else if( frameRateCap == 60 )
+    {
+        frameRateCapIndex = 1;
+    }
+    m_pMenu->SetSelectionValue( MENU_ITEM_FRAMERATE_CAP,
+                                frameRateCapIndex );
 
     bool fullscreen = plat->IsFullscreen();
     m_pMenu->SetSelectionValue( MENU_ITEM_DISPLAY_MODE,
@@ -333,12 +382,24 @@ void CGuiScreenDisplay::ApplySettings()
     //
     Win32Platform::Resolution res = static_cast< Win32Platform::Resolution >( m_pMenu->GetSelectionValue( MENU_ITEM_RESOLUTION ) );
 
-    int bpp = m_pMenu->GetSelectionValue( MENU_ITEM_COLOUR_DEPTH ) ? 32: 16;
-
     bool fullscreen = m_pMenu->GetSelectionValue( MENU_ITEM_DISPLAY_MODE ) == 1;
 
-    // Set the resolution.
-    Win32Platform::GetInstance()->SetResolution( res, bpp, fullscreen );
+    // Set the resolution. Colour depth is no longer user-selectable, so
+    // just keep whatever it's currently set to.
+    Win32Platform* plat = Win32Platform::GetInstance();
+    plat->SetResolution( res, plat->GetBPP(), fullscreen );
+
+    int frameRateCapIndex = m_pMenu->GetSelectionValue( MENU_ITEM_FRAMERATE_CAP );
+    int frameRateCap = 0; // Unlocked
+    if( frameRateCapIndex == 0 )
+    {
+        frameRateCap = 30;
+    }
+    else if( frameRateCapIndex == 1 )
+    {
+        frameRateCap = 60;
+    }
+    plat->SetFrameRateCap( frameRateCap );
 
     // Save the change to the config file.
     GetGameConfigManager()->SaveConfigFile();

@@ -12,6 +12,9 @@
 #include <radplatform.hpp>
 #include <efx.h>
 #include "radinprogext.h"
+#ifndef WIN32
+#include <cstdlib>
+#endif
 
 LPALBUFFERSTORAGESOFT radBufferStorageSOFT;
 LPALMAPBUFFERSOFT radMapBufferSOFT;
@@ -94,6 +97,19 @@ void radSoundHalSystem::Initialize( const SystemDescription & systemDescription 
     m_NumAuxSends = systemDescription.m_NumAuxSends;
 
     // Initialize OpenAL
+
+#ifndef WIN32
+    // OpenAL-Soft's native PipeWire backend doesn't reliably deliver audio
+    // for the persistently-mapped streaming buffers this HAL uses (see
+    // radBufferStorageSOFT below) - alcOpenDevice/alcCreateContext/
+    // alSourcePlay all succeed and report AL_PLAYING with no error, but
+    // nothing audible comes out (confirmed on Steam Deck/SteamOS). Prefer
+    // OpenAL-Soft's PulseAudio backend instead, which reaches the same
+    // device (SteamOS's PipeWire exposes a PulseAudio-compatible socket)
+    // without the bug. Only set this if the user/environment hasn't
+    // already chosen a driver explicitly (overwrite=0).
+    setenv( "ALSOFT_DRIVERS", "pulse,alsa", 0 );
+#endif
 
     m_pDevice = alcOpenDevice(NULL);
 

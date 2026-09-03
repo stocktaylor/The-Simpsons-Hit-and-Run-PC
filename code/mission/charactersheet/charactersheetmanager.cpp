@@ -120,7 +120,7 @@ void CharacterSheetManager::DestroyInstance()
 {
     rAssert( spInstance != NULL );
 
-    delete (GMA_PERSISTENT,spInstance);
+    delete spInstance;
     spInstance = NULL;
 }
 
@@ -863,7 +863,7 @@ void CharacterSheetManager::SaveData(GameDataByte* dataBuffer,unsigned int numBy
     {
         if( number >= 0 )
         {
-            spInstance->mCharacterSheet.mNumberOfTokens;
+            spInstance->mCharacterSheet.mNumberOfTokens = number;
         }
     }
 

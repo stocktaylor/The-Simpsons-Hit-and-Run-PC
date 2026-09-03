@@ -389,6 +389,11 @@ void CGuiScreenMultiHud::HandleEvent( EventEnum id, void* pEventData )
             }
             break;
         }
+
+        // Remaining EventEnum values aren't handled by this screen -
+        // handled below like any other unmatched case.
+        default:
+            break;
     }
 }
 

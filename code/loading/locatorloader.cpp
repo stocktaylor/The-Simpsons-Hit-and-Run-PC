@@ -273,7 +273,7 @@ MEMTRACK_PUSH_GROUP( "Locator Loading" );
                     //Do something with the name
                     GetPCM().AddFreeCar( carName, carStartloc );
 
-                    delete carName;
+                    delete[] carName;
                 }
             }
 
@@ -544,7 +544,6 @@ MEMTRACK_PUSH_GROUP( "Locator Loading" );
 
 			// Create a new action event locator
 	        ActionEventLocator*	actLoc = new ActionEventLocator();
-            /*
             actLoc->SetObjNameSize( strlen(stringArray[0]) );
             actLoc->SetObjName( stringArray[0] );
 

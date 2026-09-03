@@ -108,7 +108,7 @@ void Section::AddScreenText(const char* szName, tColour colour )
 	assert(szName);
 	ScreenText &pST =  _pScreenText[_NumScreenText];
 
-	if(_NumScreenText<MaxScreenText && pST._pText)
+	if(_NumScreenText<MaxScreenText)
 	{
 		strncpy(pST._pText, szName, sizeof(pST._pText));
 		pST._Colour = colour;
@@ -124,10 +124,9 @@ void Section::AddScreenText(const char* szName, const rmt::Vector &a, tColour co
 	assert(szName);
 	ScreenText &pST =  _pScreenText[_NumScreenText];
 
-	if(_NumScreenText<MaxScreenText && pST._pText)
+	if(_NumScreenText<MaxScreenText)
 	{
-		if(pST._pText)
-			strncpy(pST._pText, szName, sizeof(pST._pText));
+		strncpy(pST._pText, szName, sizeof(pST._pText));
 		pST._Colour = colour;
 		pST._Pos = a;
 		_NumScreenText++;
@@ -220,15 +219,10 @@ void Section::Render()
 	for(i=0;i<_NumScreenText;i++)
 	{
 		ScreenText &pST =  _pScreenText[i];
-		if(pST._pText)
-		{
-
-			p3d::pddi->DrawString(pST._pText, 
-				(int)(pST._Pos.x*width),
-				(int)(pST._Pos.y*height), 
-				pST._Colour);
-
-		}
+		p3d::pddi->DrawString(pST._pText,
+			(int)(pST._Pos.x*width),
+			(int)(pST._Pos.y*height),
+			pST._Colour);
 	}
 
 	p3d::stack->Pop();

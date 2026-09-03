@@ -1306,7 +1306,12 @@ void Vehicle::ResetOnSpot( bool resetDamage /*=true*/ , bool moveCarOntoRoad)
 
             //If this is NOT SuperSprint, do this test.  Otherwise the car will
             //always face along the road.
-            if ( !GetGameplayManager()->GetGameType() == GameplayManager::GT_SUPERSPRINT )
+            // (!x == y parses as (!x) == y, not !(x == y) as the comment
+            // intends - happened to produce the right answer here only
+            // because GameTypeEnum currently has exactly two values with
+            // GT_SUPERSPRINT == 1, making !GetGameType() == 1 equivalent to
+            // GetGameType() == GT_NORMAL == 0. Written the intended way.)
+            if ( GetGameplayManager()->GetGameType() != GameplayManager::GT_SUPERSPRINT )
             {
                 if(mVehicleFacing.DotProduct(centerlineDir) > 0.0f)
                 {
@@ -6365,7 +6370,11 @@ void Vehicle::DetachCollectible( const rmt::Vector& velocity, bool explode )
 // move the door  to the specified location (called by the character AI during get in/out of car)
 void  Vehicle::MoveDoor(Door door, DoorAction action, float position)
 {
-    rAssert(door < 2);
+    // Cast to int: Door only has two enumerators (DOOR_DRIVER, DOOR_PASSENGER),
+    // so comparing it directly against 2 is always true for any value the
+    // type can hold (same issue as the eCheatInput/eCheatID checks
+    // elsewhere in this codebase).
+    rAssert(static_cast<int>(door) < 2);
 
     mDesiredDoorPosition[door] = position;
     mDesiredDoorAction[door] = action;

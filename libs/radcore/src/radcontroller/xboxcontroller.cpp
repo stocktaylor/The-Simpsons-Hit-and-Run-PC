@@ -32,7 +32,7 @@
 #include <radmemorymonitor.hpp>
 #include "radcontrollerbuffer.hpp"
 
-#include <Windows.h>
+#include <windows.h>
 #include <xinput.h>
 
 //============================================================================

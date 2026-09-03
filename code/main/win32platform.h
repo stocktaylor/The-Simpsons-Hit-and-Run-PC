@@ -32,11 +32,7 @@ class tContext;
 // Synopsis:    Provides abstraction for setting up and closing a win32 exe.
 //
 //=============================================================================
-#ifdef RAD_PC
 class Win32Platform : public Platform, public GameConfigHandler
-#else
-class Win32Platform : public Platform
-#endif
 {
 public:
 
@@ -47,7 +43,8 @@ public:
         Res_1024x768,
         Res_1152x864,
         Res_1280x1024,
-        Res_1600x1200
+        Res_1600x1200,
+        Res_1280x800 // Steam Deck native resolution.
     };
 
 public:
@@ -100,14 +97,16 @@ public:
     int GetBPP() const;
     bool IsFullscreen() const;
 
-#ifdef RAD_PC
+    // Frame rate cap, in FPS, or 0 for unlocked.
+    virtual int GetFrameRateCap() const { return mFrameRateCap; }
+    void SetFrameRateCap( int fps ) { mFrameRateCap = fps; }
+
     // Implementation of the GameConfigHandler interface
     virtual const char* GetConfigName() const;
     virtual int GetNumProperties() const;
     virtual void LoadDefaults();
     virtual void LoadConfig( ConfigString& config );
     virtual void SaveConfig( ConfigString& config );
-#endif
 
 private:
 
@@ -163,6 +162,7 @@ private:
     Resolution mResolution;
     int mbpp;
     bool mFullscreen;
+    int mFrameRateCap;
     char mRenderer[ConfigString::MaxLength];
 };
 

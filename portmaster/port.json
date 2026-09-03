@@ -1,0 +1,28 @@
+{
+    "version": 2,
+    "name": "simpsonshitandrun.zip",
+    "items": [
+        "Simpsons Hit and Run.sh",
+        "simpsonshitandrun"
+    ],
+    "items_opt": null,
+    "attr": {
+        "title": "The Simpsons: Hit & Run",
+        "desc": "Open-world action-driving game based on the 2003 PC/console release, built from the leaked source code. Requires your own legally-owned copy of the PC release's game data - see README.md.",
+        "inst": "Copy the PC installation's data (the art, movies, sound, scripts folders and the .rcf files, using the original .rmv movie files rather than converted .bk2 ones) into simpsonshitandrun/ before first launch.",
+        "genres": [
+            "action",
+            "racing"
+        ],
+        "porter": [
+            "Taylor Stock"
+        ],
+        "image": {},
+        "rtr": false,
+        "runtime": null,
+        "reqs": [],
+        "arch": [
+            "aarch64"
+        ]
+    }
+}

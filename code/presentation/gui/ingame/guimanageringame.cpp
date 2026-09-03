@@ -32,9 +32,7 @@
 #include <presentation/gui/ingame/guiscreenmissionselect.h>
 #include <presentation/gui/ingame/guiscreenhudmap.h>
 #include <presentation/gui/ingame/guiscreenpauseoptions.h>
-#ifdef RAD_PC
 #include <presentation/gui/ingame/guiscreenpausedisplay.h>
-#endif
 #include <presentation/gui/ingame/guiscreenpausecontroller.h>
 #include <presentation/gui/ingame/guiscreenpausesound.h>
 #include <presentation/gui/ingame/guiscreenpausesettings.h>
@@ -376,23 +374,19 @@ MEMTRACK_PUSH_GROUP( "CGUIManagerInGame" );
         pScreen = new CGuiScreenPauseOptions( pScroobyScreen, this );
         this->AddWindow( CGuiWindow::GUI_SCREEN_ID_OPTIONS, pScreen );
     }
-#ifdef RAD_PC
     pScroobyScreen = m_pScroobyProject->GetScreen( "PauseDisplay" );
     if( pScroobyScreen != NULL )
     {
         pScreen = new CGuiScreenPauseDisplay( pScroobyScreen, this );
         this->AddWindow( CGuiWindow::GUI_SCREEN_ID_DISPLAY, pScreen );
     }
-#endif
 
-#ifdef RAD_PC
     pScroobyScreen = m_pScroobyProject->GetScreen( "PauseController" );
     if( pScroobyScreen != NULL )
     {
         pScreen = new CGuiScreenPauseController( pScroobyScreen, this );
         this->AddWindow( CGuiWindow::GUI_SCREEN_ID_CONTROLLER, pScreen );
     }
-#endif
 
     pScroobyScreen = m_pScroobyProject->GetScreen( "PauseSound" );
     if( pScroobyScreen != NULL )
@@ -1117,7 +1111,14 @@ void CGuiManagerInGame::HandleMessage
 void
 CGuiManagerInGame::HandleEvent( EventEnum id, void* pEventData )
 {
-    switch( id )
+    // Switched as int rather than EventEnum: EVENT_LOCATOR + LocatorEvent::X
+    // below is a deliberately valid but unnamed EventEnum value (locator
+    // sub-events are reserved a range starting at EVENT_LOCATOR, see
+    // eventenum.h's EVENT_PLACEHOLDER), not a bug - but Clang's -Wswitch
+    // flags any case value that doesn't match a named enumerator of the
+    // switch's type, which a plain int switch doesn't check (same fix as
+    // the other HandleEvent overrides in this codebase).
+    switch( static_cast<int>( id ) )
     {
         case EVENT_CONVERSATION_INIT:
         {

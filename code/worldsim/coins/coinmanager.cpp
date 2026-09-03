@@ -728,7 +728,6 @@ void CoinManager::AdjustBankValue( int DeltaCoins )
     }
 }
 
-/*
 /*=============================================================================
 Force bank to a specific value. No special effects.
 =============================================================================/
